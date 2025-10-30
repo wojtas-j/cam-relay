@@ -46,7 +46,7 @@
     </appender>
 
     <!-- Logger for app console -->
-    <logger name="com.wojtasj.camrelay" level="INFO" additivity="false">
+    <logger name="com.camrelay" level="INFO" additivity="false">
         <appender-ref ref="CUSTOM_CONSOLE"/>
         <appender-ref ref="FILE"/>
     </logger>
