@@ -1,2 +1,1 @@
-# cam-relay
-Cam Relay
+# camrelay

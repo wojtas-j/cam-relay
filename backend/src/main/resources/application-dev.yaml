@@ -1,0 +1,49 @@
+# Spring
+spring:
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_DB_HOST:localhost}:${POSTGRES_DB_PORT:5432}/${POSTGRES_DB}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate.format_sql: true
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+
+# Server
+server:
+  port: 8080
+
+# JWT
+jwt:
+  secret: ${JWT_SECRET}
+  expirationMs: ${JWT_EXPIRATION_MS}
+  refreshExpirationDays: ${JWT_REFRESH_EXPIRATION_DAYS}
+
+# Resilience
+resilience4j:
+  ratelimiter:
+    instances:
+      refreshToken:
+        limitForPeriod: 10
+        limitRefreshPeriod: 60s
+        timeoutDuration: 1s
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, metrics
+  endpoint:
+    health:
+      show-details: always
