@@ -1,0 +1,43 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+  flyway:
+    enabled: false
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      access: unrestricted
+jwt:
+  secret: "dGhpc2lzYXZlcnlsb25nc2VjcmV0a2V5Zm9yc2lnbmluZ2p3dHRva2Vucw=="
+  expirationMs: 3600000
+  refreshExpirationDays: 1
+resilience4j:
+  ratelimiter:
+    instances:
+      refreshToken:
+        limitForPeriod: 10
+        limitRefreshPeriod: 60s
+        timeoutDuration: 1s
+
+# DB initializer
+initializer:
+  username: ${ADMIN_USERNAME}
+  password: ${ADMIN_PASSWORD}
+  roles:
+    - USER
+    - RECEIVER
+    - ADMIN
