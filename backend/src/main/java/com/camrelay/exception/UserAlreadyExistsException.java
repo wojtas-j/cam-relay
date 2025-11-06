@@ -1,7 +1,7 @@
 package com.camrelay.exception;
 
 /**
- * Exception thrown when a user attempts to register with a username that is already in use.
+ * Exception thrown when a admin attempts to create user with a username that is already in use.
  * Extends {@link AuthenticationException} to integrate with the application's authentication error handling.
  * @since 1.0
  */

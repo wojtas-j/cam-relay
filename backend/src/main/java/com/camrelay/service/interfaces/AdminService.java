@@ -22,9 +22,9 @@ public interface AdminService {
     Page<AdminGetUsersResponse> getAllUsers(Pageable pageable);
 
     /**
-     * Registers a new user with the provided details.
+     * Create a new user with the provided details.
      * @param request the registration request containing username, and password
-     * @return the registered UserResponse.
+     * @return the created UserResponse.
      * @throws AuthenticationException if the username or email is already taken
      * @since 1.0
      */

@@ -80,7 +80,7 @@ public class AdminServiceImpl implements AdminService {
                 .roles(Set.of(Role.USER))
                 .build();
         UserEntity savedUser = userRepository.save(user);
-        log.info("User registered successfully: {}", savedUser.getUsername());
+        log.info("User created successfully: {}", savedUser.getUsername());
         return new UserResponse(savedUser.getUsername(), savedUser.getRoles(), savedUser.getCreatedAt());
     }
 

@@ -3,7 +3,7 @@ package com.camrelay.dto.user;
 import jakarta.validation.constraints.*;
 
 /**
- * DTO for user registration requests in the Cam Relay application.
+ * DTO for user creation requests in the Cam Relay application.
  * @param username the username for the new user
  * @param password the password for the new user
  * @since 1.0

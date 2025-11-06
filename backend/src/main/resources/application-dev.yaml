@@ -47,3 +47,12 @@ management:
   endpoint:
     health:
       show-details: always
+
+# DB initializer
+initializer:
+  username: ${ADMIN_USERNAME}
+  password: ${ADMIN_PASSWORD}
+  roles:
+    - USER
+    - RECEIVER
+    - ADMIN

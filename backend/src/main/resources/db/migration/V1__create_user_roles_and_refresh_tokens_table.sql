@@ -1,11 +1,9 @@
 CREATE TABLE IF NOT EXISTS users (
     id BIGSERIAL PRIMARY KEY,
     username VARCHAR(20) NOT NULL,
-    email VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
     created_at TIMESTAMP NOT NULL,
     CONSTRAINT uk_username UNIQUE (username),
-    CONSTRAINT uk_email UNIQUE (email),
     CONSTRAINT chk_username CHECK (username ~ '^[a-zA-Z0-9_-]+$'),
     CONSTRAINT chk_username_length CHECK (LENGTH(username) >= 3 AND LENGTH(username) <= 20)
 );
