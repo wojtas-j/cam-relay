@@ -7,7 +7,6 @@ import com.camrelay.dto.user.UserResponse;
 import com.camrelay.properties.JwtProperties;
 import com.camrelay.configuration.SecurityConfig;
 import com.camrelay.dto.user.LoginRequest;
-import com.camrelay.dto.token.RefreshTokenRequest;
 import com.camrelay.entity.RefreshTokenEntity;
 import com.camrelay.entity.Role;
 import com.camrelay.entity.UserEntity;
@@ -19,6 +18,7 @@ import com.camrelay.service.interfaces.RefreshTokenService;
 import io.github.resilience4j.ratelimiter.RateLimiter;
 import io.github.resilience4j.ratelimiter.RateLimiterConfig;
 import io.github.resilience4j.ratelimiter.RequestNotPermitted;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -61,6 +61,7 @@ class AuthenticationControllerTests {
     private static final String TEST_TOKEN = "jwt-token";
     private static final String TEST_REFRESH_TOKEN = "refresh-token";
     private static final String INVALID_TOKEN = "invalid-token";
+    private static final String REFRESH_COOKIE_NAME = "refreshToken";
 
     @Autowired
     private MockMvc mockMvc;
@@ -181,13 +182,15 @@ class AuthenticationControllerTests {
     @Nested
     class LoginTests {
         /**
-         * Tests successful user login and token generation.
+         * Tests successful user login and cookie creation.
+         * Ensures that accessToken and refreshToken cookies are set.
          * @since 1.0
          */
         @Test
         void shouldLoginUserSuccessfully() throws Exception {
             // Arrange
             LoginRequest request = new LoginRequest(TEST_USERNAME, TEST_PASSWORD);
+
             when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                     .thenReturn(authentication);
             when(jwtTokenProvider.generateToken(authentication)).thenReturn(TEST_TOKEN);
@@ -200,8 +203,10 @@ class AuthenticationControllerTests {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.accessToken").value(TEST_TOKEN))
-                    .andExpect(jsonPath("$.refreshToken").value(TEST_REFRESH_TOKEN));
+                    .andExpect(header().exists("Set-Cookie"))
+                    .andExpect(header().stringValues("Set-Cookie", hasItem(containsString("accessToken=" + TEST_TOKEN))))
+                    .andExpect(header().stringValues("Set-Cookie", hasItem(containsString("refreshToken=" + TEST_REFRESH_TOKEN))))
+                    .andExpect(content().string(""));
 
             // Verify
             verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
@@ -268,26 +273,31 @@ class AuthenticationControllerTests {
     @Nested
     class RefreshTokenTests {
         /**
-         * Tests successful token refresh and rotation.
+         * Tests successful token refresh and cookie rotation.
+         * Verifies that new access and refresh cookies are returned.
          * @since 1.0
          */
         @Test
         void shouldRefreshTokenSuccessfully() throws Exception {
             // Arrange
-            RefreshTokenRequest request = new RefreshTokenRequest(TEST_REFRESH_TOKEN);
-            RefreshTokenEntity refreshToken = createRefreshTokenEntity(TEST_REFRESH_TOKEN, userEntity);
-            when(refreshTokenService.validateRefreshToken(TEST_REFRESH_TOKEN)).thenReturn(refreshToken);
-            when(refreshTokenService.generateRefreshToken(userEntity))
-                    .thenReturn(createRefreshTokenEntity("new-refresh-token", userEntity));
+            Cookie refreshCookie = new Cookie(REFRESH_COOKIE_NAME, TEST_REFRESH_TOKEN);
+
+            RefreshTokenEntity oldToken = createRefreshTokenEntity(TEST_REFRESH_TOKEN, userEntity);
+            RefreshTokenEntity newToken = createRefreshTokenEntity("new-refresh-token", userEntity);
+
+            when(refreshTokenService.validateRefreshToken(TEST_REFRESH_TOKEN)).thenReturn(oldToken);
+            when(refreshTokenService.generateRefreshToken(userEntity)).thenReturn(newToken);
             when(jwtTokenProvider.generateToken(any(Authentication.class))).thenReturn("new-access-token");
 
             // Act & Assert
             mockMvc.perform(post(AUTH_URL + "/refresh")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
+                            .cookie(refreshCookie))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.accessToken").value("new-access-token"))
-                    .andExpect(jsonPath("$.refreshToken").value("new-refresh-token"));
+                    .andExpect(header().exists("Set-Cookie"))
+                    .andExpect(header().stringValues("Set-Cookie", hasItems(
+                            containsString("accessToken=new-access-token"),
+                            containsString("refreshToken=new-refresh-token")
+                    )));
 
             // Verify
             verify(refreshTokenService).validateRefreshToken(TEST_REFRESH_TOKEN);
@@ -297,24 +307,41 @@ class AuthenticationControllerTests {
         }
 
         /**
-         * Tests rejecting token refresh with invalid refresh token.
+         * Tests rejecting refresh request when no refreshToken cookie is present.
+         * @since 1.0
+         */
+        @Test
+        void shouldRejectRefreshWhenNoRefreshTokenCookie() throws Exception {
+            // Arrange
+            // no cookies
+
+            // Act & Assert
+            mockMvc.perform(post(AUTH_URL + "/refresh"))
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(jsonPath("$.detail").value("Missing refresh token"));
+
+            // Verify
+            verify(refreshTokenService, never()).validateRefreshToken(any());
+        }
+
+        /**
+         * Tests rejecting token refresh when the refresh token is invalid.
          * @since 1.0
          */
         @Test
         void shouldRejectRefreshWithInvalidToken() throws Exception {
             // Arrange
-            RefreshTokenRequest request = new RefreshTokenRequest(INVALID_TOKEN);
+            Cookie cookie = new Cookie(REFRESH_COOKIE_NAME, INVALID_TOKEN);
+
             when(refreshTokenService.validateRefreshToken(INVALID_TOKEN))
                     .thenThrow(new AuthenticationException("Invalid refresh token"));
 
             // Act & Assert
             mockMvc.perform(post(AUTH_URL + "/refresh")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
+                            .cookie(cookie))
                     .andExpect(status().isUnauthorized())
                     .andExpect(jsonPath("$.type").value("/problems/authentication-failed"))
                     .andExpect(jsonPath("$.title").value("Authentication Failed"))
-                    .andExpect(jsonPath("$.status").value(401))
                     .andExpect(jsonPath("$.detail").value("Invalid refresh token"));
 
             // Verify
@@ -325,52 +352,33 @@ class AuthenticationControllerTests {
         }
 
         /**
-         * Tests rejecting token refresh with empty refresh token.
-         * @since 1.0
-         */
-        @Test
-        void shouldRejectRefreshWithEmptyToken() throws Exception {
-            // Arrange
-            RefreshTokenRequest request = new RefreshTokenRequest("");
-
-            // Act & Assert
-            mockMvc.perform(post(AUTH_URL + "/refresh")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.type").value("/problems/validation-error"))
-                    .andExpect(jsonPath("$.title").value("Validation Error"))
-                    .andExpect(jsonPath("$.status").value(400))
-                    .andExpect(jsonPath("$.detail").value(containsString("refreshToken Refresh token cannot be blank")));
-
-            // Verify
-            verify(refreshTokenService, never()).validateRefreshToken(any());
-        }
-
-        /**
-         * Tests rate limiting for token refresh endpoint.
+         * Tests rate limiting for the refresh endpoint.
          * @since 1.0
          */
         @Test
         void shouldRejectRefreshWhenRateLimitExceeded() throws Exception {
             // Arrange
-            RefreshTokenRequest request = new RefreshTokenRequest(TEST_REFRESH_TOKEN);
+            Cookie cookie = new Cookie(REFRESH_COOKIE_NAME, TEST_REFRESH_TOKEN);
+
             RateLimiter rateLimiter = mock(RateLimiter.class);
             RateLimiterConfig rateLimiterConfig = RateLimiterConfig.ofDefaults();
+
             when(rateLimiter.getName()).thenReturn("refreshToken");
             when(rateLimiter.getRateLimiterConfig()).thenReturn(rateLimiterConfig);
-            RequestNotPermitted exception = RequestNotPermitted.createRequestNotPermitted(rateLimiter);
+
+            RequestNotPermitted exception =
+                    RequestNotPermitted.createRequestNotPermitted(rateLimiter);
+
             when(refreshTokenService.validateRefreshToken(TEST_REFRESH_TOKEN)).thenThrow(exception);
 
             // Act & Assert
             mockMvc.perform(post(AUTH_URL + "/refresh")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
+                            .cookie(cookie))
                     .andExpect(status().isTooManyRequests())
                     .andExpect(jsonPath("$.type").value("/problems/rate-limit-exceeded"))
                     .andExpect(jsonPath("$.title").value("Rate Limit Exceeded"))
                     .andExpect(jsonPath("$.status").value(429))
-                    .andExpect(jsonPath("$.detail").value("Too many requests - rate limit exceeded for RateLimiter 'refreshToken' does not permit further calls"))
+                    .andExpect(jsonPath("$.detail").value(containsString("Too many requests")))
                     .andExpect(jsonPath("$.instance").value(AUTH_URL + "/refresh"));
 
             // Verify

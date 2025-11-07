@@ -22,6 +22,11 @@ spring:
 # Server
 server:
   port: 8080
+  ssl:
+    enabled: true
+    key-store: classpath:certs/camrelay-dev.jks
+    key-store-password: ${SSL_KEY_STORE_PASSWORD}
+    key-store-type: JKS
 
 # JWT
 jwt:
