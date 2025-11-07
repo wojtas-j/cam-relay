@@ -1,5 +1,13 @@
+# Webstorm
+frontend/node_modules/
+
 # InteliJ IDEA
 .idea/
+
+# Certs
+*.jks
+*.cer
+*.pfx
 
 # Gradle
 .gradle/

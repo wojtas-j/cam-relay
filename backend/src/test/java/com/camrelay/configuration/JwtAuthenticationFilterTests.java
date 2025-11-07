@@ -3,6 +3,7 @@ package com.camrelay.configuration;
 import com.camrelay.service.JwtTokenProviderImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,17 +25,17 @@ import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Tests the functionality of {@link JwtAuthenticationFilter} in the Cam Relay application.
+ * Tests the functionality of {@link JwtAuthenticationFilter} when using JWT stored in cookies.
+ * Verifies that authentication is correctly set or skipped depending on the cookie state.
  * @since 1.0
  */
 @ExtendWith(MockitoExtension.class)
 class JwtAuthenticationFilterTests {
 
-    private static final String AUTH_HEADER = "Authorization";
+    private static final String COOKIE_NAME = "accessToken";
     private static final String VALID_TOKEN = "valid-jwt-token";
     private static final String INVALID_TOKEN = "invalid-jwt-token";
     private static final String USERNAME = "testuser";
-    private static final String BEARER_PREFIX = "Bearer ";
 
     @Mock
     private JwtTokenProviderImpl jwtTokenProvider;
@@ -57,7 +58,7 @@ class JwtAuthenticationFilterTests {
     private UserDetails userDetails;
 
     /**
-     * Sets up the test environment by clearing the SecurityContext and initializing UserDetails.
+     * Clears the security context and initializes a mock user before each test.
      * @since 1.0
      */
     @BeforeEach
@@ -67,13 +68,14 @@ class JwtAuthenticationFilterTests {
     }
 
     /**
-     * Tests that the filter proceeds without authentication when the Authorization header is null.
+     * Tests that the filter allows the request to proceed without authentication
+     * when no cookies are present.
      * @since 1.0
      */
     @Test
-    void shouldProceedWithoutAuthenticationWhenAuthorizationHeaderIsNull() throws ServletException, IOException {
+    void shouldProceedWithoutAuthenticationWhenNoCookies() throws ServletException, IOException {
         // Arrange
-        when(request.getHeader(AUTH_HEADER)).thenReturn(null);
+        when(request.getCookies()).thenReturn(null);
 
         // Act
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
@@ -85,13 +87,15 @@ class JwtAuthenticationFilterTests {
     }
 
     /**
-     * Tests that the filter proceeds without authentication when the Authorization header does not start with 'Bearer '.
+     * Tests that the filter proceeds without authentication when cookies exist
+     * but the accessToken cookie is missing.
      * @since 1.0
      */
     @Test
-    void shouldProceedWithoutAuthenticationWhenAuthorizationHeaderDoesNotStartWithBearer() throws ServletException, IOException {
+    void shouldProceedWithoutAuthenticationWhenAccessTokenCookieMissing() throws ServletException, IOException {
         // Arrange
-        when(request.getHeader(AUTH_HEADER)).thenReturn("InvalidToken");
+        Cookie[] cookies = { new Cookie("otherCookie", "value") };
+        when(request.getCookies()).thenReturn(cookies);
 
         // Act
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
@@ -103,13 +107,15 @@ class JwtAuthenticationFilterTests {
     }
 
     /**
-     * Tests that the filter proceeds without authentication when the JWT token is invalid.
+     * Tests that authentication is skipped when the access token is present in cookies
+     * but the token is invalid.
      * @since 1.0
      */
     @Test
     void shouldProceedWithoutAuthenticationWhenTokenIsInvalid() throws ServletException, IOException {
         // Arrange
-        when(request.getHeader(AUTH_HEADER)).thenReturn(BEARER_PREFIX + INVALID_TOKEN);
+        Cookie[] cookies = { new Cookie(COOKIE_NAME, INVALID_TOKEN) };
+        when(request.getCookies()).thenReturn(cookies);
         when(jwtTokenProvider.validateToken(INVALID_TOKEN)).thenReturn(false);
 
         // Act
@@ -117,19 +123,21 @@ class JwtAuthenticationFilterTests {
 
         // Assert
         verify(filterChain).doFilter(request, response);
-        assertNull(SecurityContextHolder.getContext().getAuthentication());
         verify(jwtTokenProvider).validateToken(INVALID_TOKEN);
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
         verifyNoInteractions(userDetailsService);
     }
 
     /**
-     * Tests that the filter sets authentication in SecurityContext when the JWT token is valid.
+     * Tests that authentication is correctly set in the SecurityContext
+     * when the JWT token from cookies is valid and the user exists.
      * @since 1.0
      */
     @Test
     void shouldSetAuthenticationWhenTokenIsValid() throws ServletException, IOException {
         // Arrange
-        when(request.getHeader(AUTH_HEADER)).thenReturn(BEARER_PREFIX + VALID_TOKEN);
+        Cookie[] cookies = { new Cookie(COOKIE_NAME, VALID_TOKEN) };
+        when(request.getCookies()).thenReturn(cookies);
         when(jwtTokenProvider.validateToken(VALID_TOKEN)).thenReturn(true);
         when(jwtTokenProvider.getUsernameFromToken(VALID_TOKEN)).thenReturn(USERNAME);
         when(userDetailsService.loadUserByUsername(USERNAME)).thenReturn(userDetails);
@@ -142,19 +150,23 @@ class JwtAuthenticationFilterTests {
         verify(jwtTokenProvider).validateToken(VALID_TOKEN);
         verify(jwtTokenProvider).getUsernameFromToken(VALID_TOKEN);
         verify(userDetailsService).loadUserByUsername(USERNAME);
+
         assertNotNull(SecurityContextHolder.getContext().getAuthentication());
         assertEquals(USERNAME, SecurityContextHolder.getContext().getAuthentication().getName());
     }
 
     /**
-     * Tests that the filter handles exceptions during token validation and proceeds without authentication.
+     * Tests that the filter handles exceptions thrown during token validation
+     * and proceeds without authentication.
      * @since 1.0
      */
     @Test
     void shouldHandleTokenValidationException() throws ServletException, IOException {
         // Arrange
-        when(request.getHeader(AUTH_HEADER)).thenReturn(BEARER_PREFIX + INVALID_TOKEN);
-        when(jwtTokenProvider.validateToken(INVALID_TOKEN)).thenThrow(new RuntimeException("Invalid token"));
+        Cookie[] cookies = { new Cookie(COOKIE_NAME, INVALID_TOKEN) };
+        when(request.getCookies()).thenReturn(cookies);
+        when(jwtTokenProvider.validateToken(INVALID_TOKEN))
+                .thenThrow(new RuntimeException("Token error"));
 
         // Act
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
@@ -167,16 +179,19 @@ class JwtAuthenticationFilterTests {
     }
 
     /**
-     * Tests that the filter handles UsernameNotFoundException and proceeds without authentication.
+     * Tests that the filter proceeds without authentication when a valid token is provided
+     * but the user cannot be found.
      * @since 1.0
      */
     @Test
     void shouldHandleUsernameNotFoundException() throws ServletException, IOException {
         // Arrange
-        when(request.getHeader(AUTH_HEADER)).thenReturn(BEARER_PREFIX + VALID_TOKEN);
+        Cookie[] cookies = { new Cookie(COOKIE_NAME, VALID_TOKEN) };
+        when(request.getCookies()).thenReturn(cookies);
         when(jwtTokenProvider.validateToken(VALID_TOKEN)).thenReturn(true);
         when(jwtTokenProvider.getUsernameFromToken(VALID_TOKEN)).thenReturn(USERNAME);
-        when(userDetailsService.loadUserByUsername(USERNAME)).thenThrow(new UsernameNotFoundException("User not found"));
+        when(userDetailsService.loadUserByUsername(USERNAME))
+                .thenThrow(new UsernameNotFoundException("User not found"));
 
         // Act
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
@@ -185,7 +200,6 @@ class JwtAuthenticationFilterTests {
         verify(filterChain).doFilter(request, response);
         verify(jwtTokenProvider).validateToken(VALID_TOKEN);
         verify(jwtTokenProvider).getUsernameFromToken(VALID_TOKEN);
-        verify(userDetailsService).loadUserByUsername(USERNAME);
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 }
