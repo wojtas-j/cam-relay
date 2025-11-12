@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { getCurrentUser, logout } from "../api/auth";
+import { getCurrentUser, logout, refreshToken } from "../api/auth";
 
 interface User {
     username: string;
@@ -36,7 +36,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     useEffect(() => {
-        refreshUser();
+        const initialize = async () => {
+            try {
+                await refreshToken();
+            } catch {
+            } finally {
+                await refreshUser();
+            }
+        };
+
+        initialize();
+
+        const handleForceLogout = () => {
+            setUser(null);
+            setLoading(false);
+        };
+
+        window.addEventListener("force-logout", handleForceLogout);
+        return () => window.removeEventListener("force-logout", handleForceLogout);
     }, []);
 
     return (
