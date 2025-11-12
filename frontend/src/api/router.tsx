@@ -5,6 +5,7 @@ import DashboardPage from "../pages/DashboardPage/DashboardPage";
 import CreateUserPage from "../pages/CreateUserPage/CreateUserPage";
 import { ProtectedRoute } from "../routes/ProtectedRoute";
 import NotFoundPage from "../pages/NotFoundPage/NotFoundPage.tsx";
+import StreamPage from "../pages/StreamPage/StreamPage.tsx";
 
 export const router = createBrowserRouter([
     {
@@ -24,6 +25,14 @@ export const router = createBrowserRouter([
                 element: (
                     <ProtectedRoute>
                         <DashboardPage />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "stream",
+                element: (
+                    <ProtectedRoute roles={["USER"]}>
+                        <StreamPage />
                     </ProtectedRoute>
                 ),
             },

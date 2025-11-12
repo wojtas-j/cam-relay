@@ -28,6 +28,37 @@
     color: #333;
 }
 
+.dashboard-buttons {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-evenly;
+}
+
+.delete-btn {
+    background-color: #d9534f;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.delete-btn:hover {
+    background: #d32f2f;
+}
+
+.stream-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.stream-btn:hover {
+    background: #0069d9;
+}
+
 @media (max-width: 768px) {
     .dashboard-box {
         width: 90%;

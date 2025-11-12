@@ -24,6 +24,10 @@ export const refreshToken = async () => {
     return axiosClient.post("/auth/refresh");
 };
 
+export const deleteAccount = async () => {
+    return axiosClient.delete("/users");
+};
+
 let isRefreshing = false;
 let refreshSubscribers: ((tokenRefreshed: boolean) => void)[] = [];
 
