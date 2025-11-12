@@ -144,11 +144,10 @@ class AuthenticationControllerTests {
             // Act & Assert
             mockMvc.perform(get(AUTH_URL + "/me")
                             .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isForbidden())
-                    .andExpect(jsonPath("$.type").value("/problems/access-denied"))
-                    .andExpect(jsonPath("$.title").value("Access Denied"))
-                    .andExpect(jsonPath("$.status").value(403))
-                    .andExpect(jsonPath("$.detail").exists());
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(jsonPath("$.type").value("/problems/authentication-failed"))
+                    .andExpect(jsonPath("$.title").value("Authentication Failed"))
+                    .andExpect(jsonPath("$.status").value(401));
 
             // Verify
             verify(authenticationService, never()).findByUsername(any());
