@@ -32,11 +32,6 @@
     background: rgba(255,255,255,0.1);
 }
 
-.admin-btn {
-    border-color: #4b79ff;
-    color: #4b79ff;
-}
-
 .logout-btn {
     background: #e53935;
     border: none;

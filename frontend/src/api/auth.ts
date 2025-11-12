@@ -28,6 +28,40 @@ export const deleteAccount = async () => {
     return axiosClient.delete("/users");
 };
 
+export const createUser = async (username: string, password: string, roles: string[]) => {
+    try {
+        const res = await axiosClient.post("/admin/create", { username, password, roles });
+        return res.data;
+    } catch (error) {
+        const axiosErr = error as AxiosError<any>;
+        if (!axiosErr.response) {
+            throw {
+                status: 0,
+                message: "Server unreachable. Please check your connection.",
+                data: null,
+            };
+        }
+
+        const status = axiosErr.response?.status;
+        const data = axiosErr.response?.data;
+
+        console.log("🚨 Caught createUser error in auth.ts:", { status, data });
+
+        const message =
+            data?.detail ||
+            data?.message ||
+            data?.error ||
+            Object.values(data ?? {}).flat().join("; ") ||
+            "Unexpected error while creating user.";
+
+        throw {
+            status,
+            message,
+            data,
+        };
+    }
+};
+
 let isRefreshing = false;
 let refreshSubscribers: ((tokenRefreshed: boolean) => void)[] = [];
 
@@ -61,7 +95,6 @@ axiosClient.interceptors.response.use(
         isRefreshing = true;
 
         try {
-            console.log("%c🔄 Refreshing access token...", "color: orange; font-weight: bold");
             await refreshToken();
             console.log("%c✅ Token refreshed successfully", "color: green; font-weight: bold");
 
@@ -76,8 +109,8 @@ axiosClient.interceptors.response.use(
             } catch {}
 
             window.dispatchEvent(new Event("force-logout"));
-
             window.location.href = "/login";
+
             return Promise.reject(refreshError);
         } finally {
             isRefreshing = false;

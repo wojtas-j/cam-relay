@@ -24,6 +24,34 @@
     box-sizing: border-box;
 }
 
+.password-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.password-wrapper input {
+    width: 100%;
+    padding-right: 38px;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #4b79ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    background: transparent;
+}
+
+.password-toggle:hover {
+    color: #335ef0;
+}
+
 .login-box button {
     width: 100%;
     padding: 12px;
@@ -42,8 +70,12 @@
 }
 
 .login-box * {
-    background: white;
     color: #222;
+    background: white;
+}
+
+.password-toggle * {
+    background: transparent !important;
 }
 
 @media (max-width: 768px) {

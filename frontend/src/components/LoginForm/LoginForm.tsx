@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import "./LoginForm.css";
 import Popup from "../Popup/Popup";
+import { Eye, EyeOff } from "lucide-react";
 
 interface LoginFormProps {
     onSuccess: (u: string, p: string) => void;
@@ -9,11 +10,11 @@ interface LoginFormProps {
 export default function LoginForm({ onSuccess }: LoginFormProps) {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-
         try {
             onSuccess(username, password);
         } catch {
@@ -23,7 +24,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
 
     return (
         <>
-            {error && <Popup message={error} onClose={() => setError(null)} />}
+            {error && <Popup message={error} onClose={() => setError(null)} type="error" />}
 
             <div className="login-box">
                 <h2 className="login-title">Sign in</h2>
@@ -36,12 +37,20 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
                         onChange={(e) => setUsername(e.target.value)}
                     />
 
-                    <input
-                        type="password"
-                        placeholder="Password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                    />
+                    <div className="password-wrapper">
+                        <input
+                            type={showPassword ? "text" : "password"}
+                            placeholder="Password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                        />
+                        <span
+                            className="password-toggle"
+                            onClick={() => setShowPassword((prev) => !prev)}
+                        >
+                            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        </span>
+                    </div>
 
                     <button type="submit">Login</button>
                 </form>

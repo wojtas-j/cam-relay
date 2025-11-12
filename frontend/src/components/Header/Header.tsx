@@ -38,7 +38,7 @@ export default function Header() {
                 </button>
 
                 {user?.roles.includes("ADMIN") && (
-                    <button onClick={() => navigate("/create-user")} className="header-btn admin-btn">
+                    <button onClick={() => navigate("/create-user")} className="header-btn">
                         Create User
                     </button>
                 )}
