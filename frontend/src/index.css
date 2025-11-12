@@ -9,3 +9,22 @@ body {
 * {
     box-sizing: inherit;
 }
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.app-content {
+    flex: 1;
+    padding-top: 30px;
+    padding-bottom: 80px;
+}
+
+@media (max-width: 600px) {
+    .app-content {
+        padding-top: 70px;
+        padding-bottom: 70px;
+    }
+}

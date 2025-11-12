@@ -10,6 +10,10 @@ export const login = async (username: string, password: string) => {
     return res.data;
 };
 
+export const logout = async () => {
+    await axiosClient.post("/auth/logout");
+};
+
 export const getCurrentUser = async () => {
     const res = await axiosClient.get("/auth/me");
     return res.data;

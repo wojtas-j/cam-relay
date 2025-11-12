@@ -4,16 +4,19 @@ import LoginForm from "../../components/LoginForm/LoginForm";
 import { login } from "../../api/auth";
 import Popup from "../../components/Popup/Popup";
 import Footer from "../../components/Footer/Footer";
+import { useAuth } from "../../context/AuthContext";
 
 const LoginPage: React.FC = () => {
     const navigate = useNavigate();
     const [error, setError] = useState<string | null>(null);
+    const { refreshUser } = useAuth();
 
     const handleLogin = async (username: string, password: string) => {
         try {
             await login(username, password);
+            await refreshUser();
             navigate("/dashboard");
-        } catch (err: any) {
+        } catch {
             setError("Invalid username or password.");
         }
     };
