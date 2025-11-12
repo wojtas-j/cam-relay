@@ -1,4 +1,3 @@
-// src/pages/DashboardPage/DashboardPage.tsx
 import React, { useEffect, useState } from "react";
 import { getCurrentUser, deleteAccount } from "../../api/auth";
 import { useNavigate } from "react-router-dom";
@@ -42,25 +41,16 @@ const DashboardPage: React.FC = () => {
 
     if (!user) return <p>Loading user data...</p>;
 
-    const isAdmin = user.roles?.includes("ADMIN");
-
     return (
         <div className="dashboard-container">
             <div className="dashboard-box">
                 <h1>Dashboard</h1>
-                <p><strong>Username:</strong> {user.username}</p>
 
-                <div className="dashboard-buttons">
-                    <button className="delete-btn" onClick={() => setShowPopup(true)}>
-                        Delete Account
-                    </button>
+                <p className="username">USER: {user.username}</p>
 
-                    {!isAdmin && (
-                        <button className="stream-btn" onClick={() => navigate("/stream")}>
-                            Stream
-                        </button>
-                    )}
-                </div>
+                <button className="delete-btn" onClick={() => setShowPopup(true)}>
+                    Delete Account
+                </button>
             </div>
 
             {showPopup && (

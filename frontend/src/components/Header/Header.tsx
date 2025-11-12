@@ -7,6 +7,7 @@ export default function Header() {
     const { user, logoutUser } = useAuth();
     const navigate = useNavigate();
     const [opacity, setOpacity] = useState(0.8);
+    const [menuOpen, setMenuOpen] = useState(false);
 
     useEffect(() => {
         const handleScroll = () => setOpacity(window.scrollY > 20 ? 0.25 : 0.8);
@@ -19,26 +20,65 @@ export default function Header() {
         navigate("/login");
     };
 
+    const handleNavigate = (path: string) => {
+        navigate(path);
+        setMenuOpen(false);
+    };
+
     return (
-        <header className="header" style={{ background: `rgba(20,20,20,${opacity})` }}>
-            <div className="header-left">
+        <header className="header" style={{ background: `rgba(36, 52, 71,${opacity})` }}>
+            <div className="header-title" onClick={() => navigate("/dashboard")}>
+                CamRelay
+            </div>
+
+            {/* Desktop buttons */}
+            <div className="header-buttons">
                 <button onClick={() => navigate("/dashboard")} className="header-btn">
                     Dashboard
                 </button>
+
                 {user?.roles.includes("ADMIN") && (
                     <button onClick={() => navigate("/create-user")} className="header-btn admin-btn">
                         Create User
                     </button>
                 )}
-            </div>
 
-            <div className="header-right">
+                {user?.roles.includes("USER") && (
+                    <button onClick={() => navigate("/stream")} className="header-btn">
+                        Stream
+                    </button>
+                )}
+
                 {user && (
                     <button onClick={handleLogout} className="logout-btn">
                         Logout
                     </button>
                 )}
             </div>
+
+
+            {/* Mobile menu button */}
+            <button
+                className="menu-toggle"
+                onClick={() => setMenuOpen((prev) => !prev)}
+            >
+                ☰
+            </button>
+
+            {/* Mobile dropdown */}
+            {menuOpen && (
+                <div className="mobile-menu">
+                    <button onClick={() => handleNavigate("/dashboard")}>Dashboard</button>
+                    {user?.roles.includes("ADMIN") && (
+                        <button onClick={() => handleNavigate("/create-user")}>Create User</button>
+                    )}
+                    {user?.roles.includes("USER") && (
+                        <button onClick={() => handleNavigate("/stream")}>Stream</button>
+                    )}
+                    {user && <button onClick={handleLogout}>Logout</button>}
+                </div>
+            )}
+
         </header>
     );
 }

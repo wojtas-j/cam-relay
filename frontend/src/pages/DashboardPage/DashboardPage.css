@@ -2,90 +2,59 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: calc(100vh - 60px);
+    min-height: calc(100vh - 100px);
     text-align: center;
     flex-direction: column;
+    margin: 0;
+    padding: 0;
 }
 
 .dashboard-box {
     width: 400px;
-    padding: 32px;
+    padding: 40px;
     background: white;
     border-radius: 16px;
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
-    text-align: left;
+    text-align: center;
 }
 
 .dashboard-box h1 {
-    text-align: center;
     margin-bottom: 20px;
     color: #222;
 }
 
-.user-info p {
-    margin: 8px 0;
-    font-size: 15px;
+.username {
+    font-size: 18px;
+    font-weight: bold;
     color: #333;
-}
-
-.dashboard-buttons {
-    margin-top: 20px;
-    display: flex;
-    justify-content: space-evenly;
+    margin-bottom: 30px;
 }
 
 .delete-btn {
     background-color: #d9534f;
     color: white;
     border: none;
-    padding: 10px 16px;
+    padding: 10px 20px;
     border-radius: 6px;
     cursor: pointer;
+    font-size: 15px;
+    transition: background 0.2s;
 }
+
 .delete-btn:hover {
-    background: #d32f2f;
-}
-
-.stream-btn {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 10px 16px;
-    border-radius: 6px;
-    cursor: pointer;
-}
-
-.stream-btn:hover {
-    background: #0069d9;
+    background: #c62828;
 }
 
 @media (max-width: 768px) {
     .dashboard-box {
         width: 90%;
-        padding: 24px;
-    }
-
-    .dashboard-box h1 {
-        font-size: 22px;
-    }
-
-    .user-info p {
-        font-size: 14px;
+        padding: 28px;
     }
 }
 
 @media (max-width: 480px) {
     .dashboard-box {
         width: 95%;
-        padding: 20px;
-        border-radius: 12px;
-    }
-
-    .dashboard-box h1 {
-        font-size: 20px;
-    }
-
-    .user-info p {
-        font-size: 13px;
+        padding: 24px;
     }
 }
