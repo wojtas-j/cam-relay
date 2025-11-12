@@ -1,6 +1,7 @@
 package com.camrelay.exception;
 
 import com.camrelay.dto.user.CreateUserRequest;
+import com.camrelay.entity.Role;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -121,7 +122,7 @@ class GlobalExceptionHandlerTests {
     @Test
     void shouldHandleValidationException() throws Exception {
         // Arrange
-        CreateUserRequest createUserRequest = new CreateUserRequest("", "");
+        CreateUserRequest createUserRequest = new CreateUserRequest("", "", Set.of(Role.USER));
 
         // Act & Assert
         mockMvc.perform(post("/test/validation")

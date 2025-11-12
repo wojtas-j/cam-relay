@@ -1,6 +1,7 @@
 package com.camrelay.component;
 
 import com.camrelay.dto.user.CreateUserRequest;
+import com.camrelay.entity.Role;
 import com.camrelay.entity.UserEntity;
 import com.camrelay.properties.AdminInitializerProperties;
 import com.camrelay.repository.UserRepository;
@@ -11,6 +12,8 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+
+import java.util.Set;
 
 /**
  * Component responsible for creating the initial admin user on the first
@@ -42,7 +45,7 @@ public class AdminInitializerComponent implements ApplicationRunner {
           return;
       }
 
-      CreateUserRequest request = new CreateUserRequest(properties.getUsername(), properties.getPassword());
+      CreateUserRequest request = new CreateUserRequest(properties.getUsername(), properties.getPassword(), Set.of(Role.USER, Role.ADMIN, Role.RECEIVER));
       var violations = validator.validate(request);
       if (!violations.isEmpty()) {
 

@@ -77,7 +77,7 @@ public class AdminServiceImpl implements AdminService {
         UserEntity user = UserEntity.builder()
                 .username(request.username())
                 .password(passwordEncoder.encode(request.password()))
-                .roles(Set.of(Role.USER))
+                .roles(request.roles())
                 .build();
         UserEntity savedUser = userRepository.save(user);
         log.info("User created successfully: {}", savedUser.getUsername());
