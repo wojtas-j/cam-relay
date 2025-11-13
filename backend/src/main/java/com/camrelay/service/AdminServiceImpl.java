@@ -47,7 +47,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public Page<AdminGetUsersResponse> getAllUsers(Pageable pageable) {
         log.info("Fetching all users for admin request");
-        Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("createdAt").descending());
+        Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("createdAt").ascending());
         Page<UserEntity> users = userRepository.findAll(sortedPageable);
         Page<AdminGetUsersResponse> userDTOs = users.map(user -> new AdminGetUsersResponse(
                 user.getId(),

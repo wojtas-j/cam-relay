@@ -28,6 +28,16 @@ export const deleteAccount = async () => {
     return axiosClient.delete("/users");
 };
 
+export const getAllUsers = async (page = 0, size = 10) => {
+    const res = await axiosClient.get(`/admin/users?page=${page}&size=${size}`);
+    return res.data;
+};
+
+export const deleteUser = async (id: number) => {
+    const res = await axiosClient.delete(`/admin/users/${id}`);
+    return res.data;
+};
+
 export const createUser = async (username: string, password: string, roles: string[]) => {
     try {
         const res = await axiosClient.post("/admin/create", { username, password, roles });

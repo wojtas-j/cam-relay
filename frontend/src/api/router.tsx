@@ -6,6 +6,7 @@ import CreateUserPage from "../pages/CreateUserPage/CreateUserPage";
 import { ProtectedRoute } from "../routes/ProtectedRoute";
 import NotFoundPage from "../pages/NotFoundPage/NotFoundPage.tsx";
 import StreamPage from "../pages/StreamPage/StreamPage.tsx";
+import UsersPage from "../pages/UserPage/UserPage.tsx";
 
 export const router = createBrowserRouter([
     {
@@ -41,6 +42,14 @@ export const router = createBrowserRouter([
                 element: (
                     <ProtectedRoute roles={["ADMIN"]}>
                         <CreateUserPage />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "users",
+                element: (
+                    <ProtectedRoute roles={["ADMIN"]}>
+                        <UsersPage />
                     </ProtectedRoute>
                 ),
             },

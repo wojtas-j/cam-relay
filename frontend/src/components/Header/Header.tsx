@@ -43,6 +43,12 @@ export default function Header() {
                     </button>
                 )}
 
+                {user?.roles.includes("ADMIN") && (
+                    <button onClick={() => navigate("/users")} className="header-btn">
+                        Users
+                    </button>
+                )}
+
                 {user?.roles.includes("USER") && (
                     <button onClick={() => navigate("/stream")} className="header-btn">
                         Stream
@@ -71,6 +77,9 @@ export default function Header() {
                     <button onClick={() => handleNavigate("/dashboard")}>Dashboard</button>
                     {user?.roles.includes("ADMIN") && (
                         <button onClick={() => handleNavigate("/create-user")}>Create User</button>
+                    )}
+                    {user?.roles.includes("ADMIN") && (
+                        <button onClick={() => handleNavigate("/users")}>Users</button>
                     )}
                     {user?.roles.includes("USER") && (
                         <button onClick={() => handleNavigate("/stream")}>Stream</button>

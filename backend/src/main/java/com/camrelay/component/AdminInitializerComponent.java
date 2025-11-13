@@ -45,7 +45,7 @@ public class AdminInitializerComponent implements ApplicationRunner {
           return;
       }
 
-      CreateUserRequest request = new CreateUserRequest(properties.getUsername(), properties.getPassword(), Set.of(Role.ADMIN, Role.RECEIVER));
+      CreateUserRequest request = new CreateUserRequest(properties.getUsername(), properties.getPassword(), properties.getRoles());
       var violations = validator.validate(request);
       if (!violations.isEmpty()) {
 
