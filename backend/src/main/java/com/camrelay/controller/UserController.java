@@ -1,5 +1,6 @@
 package com.camrelay.controller;
 
+import com.camrelay.component.CookieComponent;
 import com.camrelay.dto.user.GetUsersByRoleResponse;
 import com.camrelay.entity.Role;
 import com.camrelay.exception.UserNotFoundException;
@@ -12,7 +13,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -33,6 +33,7 @@ import java.util.Map;
 public class UserController {
 
     private final UserService userService;
+    private final CookieComponent cookieComponent;
 
     /**
      * Retrieves a list of all users for containing role, excluding sensitive fields like password and API key
@@ -73,29 +74,10 @@ public class UserController {
         log.info("Deleting account for user: {}", userDetails.getUsername());
         userService.deleteAccount(userDetails.getUsername());
 
-        clearCookie(response, "accessToken");
-        clearCookie(response, "refreshToken");
+        cookieComponent.clearCookie(response, "accessToken");
+        cookieComponent.clearCookie(response, "refreshToken");
 
         log.info("Account deleted successfully for user: {}", userDetails.getUsername());
         return ResponseEntity.noContent().build();
-    }
-
-    /**
-     * Clears a secure HTTP cookie to the response.
-     * @param response the {@link HttpServletResponse} to which the cookie will be added
-     * @param name the name of the cookie
-     * @since 1.0
-     */
-    private void clearCookie(HttpServletResponse response, String name) {
-        ResponseCookie cookie = ResponseCookie.from(name, "")
-                .httpOnly(true)
-                .secure(true)
-                .sameSite("None")
-                .path("/")
-                .domain("localhost")
-                .maxAge(0)
-                .build();
-
-        response.addHeader("Set-Cookie", cookie.toString());
     }
 }

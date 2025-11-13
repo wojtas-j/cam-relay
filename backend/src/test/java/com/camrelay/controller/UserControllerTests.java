@@ -1,5 +1,6 @@
 package com.camrelay.controller;
 
+import com.camrelay.component.CookieComponent;
 import com.camrelay.configuration.SecurityConfig;
 import com.camrelay.dto.user.GetUsersByRoleResponse;
 import com.camrelay.entity.Role;
@@ -49,6 +50,10 @@ class UserControllerTests {
     @SuppressWarnings("unused")
     @MockitoBean
     private JwtTokenProviderImpl jwtTokenProvider;
+
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private CookieComponent cookieComponent;
 
     @Nested
     class DeleteUser {

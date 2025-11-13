@@ -1,5 +1,6 @@
 package com.camrelay.controller;
 
+import com.camrelay.component.CookieComponent;
 import com.camrelay.dto.user.LoginRequest;
 import com.camrelay.dto.user.UserResponse;
 import com.camrelay.properties.JwtProperties;
@@ -22,7 +23,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -49,9 +49,11 @@ public class AuthenticationController {
     private final JwtTokenProviderImpl jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
     private final JwtProperties jwtProperties;
+    private final CookieComponent cookieComponent;
 
     /**
      * Retrieves information about the currently authenticated user.
+     *
      * @param userDetails the authenticated user's details
      * @return {@link ResponseEntity} with the current user's info ({@link UserResponse}) - (username, roles, created time)
      * @throws AuthenticationException if the user is not found
@@ -75,6 +77,7 @@ public class AuthenticationController {
 
     /**
      * Authenticates a user and returns access and refresh tokens.
+     *
      * @param request the login request with username and password
      * @return {@link ResponseEntity} with the access and refresh tokens
      * @throws AuthenticationException if authentication fails
@@ -96,8 +99,8 @@ public class AuthenticationController {
         UserEntity user = authenticationService.findEntityByUsername(request.username());
         RefreshTokenEntity refreshToken = refreshTokenService.generateRefreshToken(user);
 
-        addCookie(response, "accessToken", accessToken, jwtProperties.getExpirationMs());
-        addCookie(response, "refreshToken", refreshToken.getToken(), jwtProperties.getRefreshExpirationDays() * 86400000L);
+        cookieComponent.addCookie(response, "accessToken", accessToken, jwtProperties.getExpirationMs());
+        cookieComponent.addCookie(response, "refreshToken", refreshToken.getToken(), jwtProperties.getRefreshExpirationDays() * 86400000L);
 
         log.info("User authenticated successfully: {}", request.username());
         return ResponseEntity.ok().build();
@@ -105,6 +108,7 @@ public class AuthenticationController {
 
     /**
      * Refreshes an access token using a valid refresh token and rotates the refresh token.
+     *
      * @param request the {@link HttpServletRequest} request containing the cookies with refresh token.
      * @return {@link ResponseEntity} with new access and refresh tokens
      * @throws AuthenticationException if the refresh token is invalid or expired
@@ -143,8 +147,8 @@ public class AuthenticationController {
         Authentication authentication = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
         String newAccessToken = jwtTokenProvider.generateToken(authentication);
 
-        addCookie(response, "accessToken", newAccessToken, jwtProperties.getExpirationMs());
-        addCookie(response, "refreshToken", newRefreshToken.getToken(), jwtProperties.getRefreshExpirationDays() * 86400000L);
+        cookieComponent.addCookie(response, "accessToken", newAccessToken, jwtProperties.getExpirationMs());
+        cookieComponent.addCookie(response, "refreshToken", newRefreshToken.getToken(), jwtProperties.getRefreshExpirationDays() * 86400000L);
 
         log.info("Access token and refresh token rotated successfully for user: {}", user.getUsername());
         return ResponseEntity.ok(Map.of("status", "ok"));
@@ -152,6 +156,7 @@ public class AuthenticationController {
 
     /**
      * Logs out the authenticated user by invalidating all their refresh tokens.
+     *
      * @param userDetails the authenticated user's details
      * @return {@link ResponseEntity} indicating successful logout
      * @throws AuthenticationException if the user is not found
@@ -171,49 +176,10 @@ public class AuthenticationController {
         UserEntity user = authenticationService.findEntityByUsername(userDetails.getUsername());
 
         refreshTokenService.deleteByUser(user);
-        clearCookie(response, "accessToken");
-        clearCookie(response, "refreshToken");
+        cookieComponent.clearCookie(response, "accessToken");
+        cookieComponent.clearCookie(response, "refreshToken");
 
         log.info("User logged out successfully: {}", user.getUsername());
         return ResponseEntity.ok().build();
-    }
-
-    /**
-     * Adds a secure HTTP cookie to the response.
-     * @param response the {@link HttpServletResponse} to which the cookie will be added
-     * @param name the name of the cookie
-     * @param value the value of the cookie
-     * @param maxAgeMs the maximum age of the cookie in milliseconds
-     * @since 1.0
-     */
-    private void addCookie(HttpServletResponse response, String name, String value, long maxAgeMs) {
-        ResponseCookie cookie = ResponseCookie.from(name, value)
-                .httpOnly(true)
-                .secure(true)
-                .sameSite("None")
-                .path("/")
-                .domain("localhost")
-                .maxAge(maxAgeMs / 1000)
-                .build();
-        response.addHeader("Set-Cookie", cookie.toString());
-    }
-
-    /**
-     * Clears a secure HTTP cookie to the response.
-     * @param response the {@link HttpServletResponse} to which the cookie will be added
-     * @param name the name of the cookie
-     * @since 1.0
-     */
-    private void clearCookie(HttpServletResponse response, String name) {
-        ResponseCookie cookie = ResponseCookie.from(name, "")
-                .httpOnly(true)
-                .secure(true)
-                .sameSite("None")
-                .path("/")
-                .domain("localhost")
-                .maxAge(0)
-                .build();
-
-        response.addHeader("Set-Cookie", cookie.toString());
     }
 }
