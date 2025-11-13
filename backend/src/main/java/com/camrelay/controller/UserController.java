@@ -1,5 +1,8 @@
 package com.camrelay.controller;
 
+import com.camrelay.dto.user.GetUsersByRoleResponse;
+import com.camrelay.entity.Role;
+import com.camrelay.exception.UserNotFoundException;
 import com.camrelay.service.interfaces.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -16,6 +19,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -29,6 +33,27 @@ import java.util.Map;
 public class UserController {
 
     private final UserService userService;
+
+    /**
+     * Retrieves a list of all users for containing role, excluding sensitive fields like password and API key
+     * @return a list of user DTOs
+     * @throws UserNotFoundException if user with that role does not exist
+     * @since 1.0
+     */
+    @Operation(summary = "Gets all users with role RECEIVER (admin-only)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Users fetched successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - missing or invalid token"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - requires ADMIN role"),
+            @ApiResponse(responseCode = "500", description = "Server error")
+    })
+    @GetMapping("/receivers")
+    public ResponseEntity<List<GetUsersByRoleResponse>> getAllReceivers() {
+        log.info("Fetching all users with role RECEIVER");
+        List<GetUsersByRoleResponse> receivers = userService.getUsersByRole(Role.RECEIVER);
+        log.info("Found {} receivers", receivers.size());
+        return ResponseEntity.ok(receivers);
+    }
 
     /**
      * Deletes the authenticated user's account and associated refresh tokens.

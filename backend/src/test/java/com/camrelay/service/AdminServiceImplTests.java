@@ -175,7 +175,7 @@ class AdminServiceImplTests {
         void shouldGetAllUsersWithDifferentPageSizeAndSort() {
             // Arrange
             Pageable inputPageable = PageRequest.of(1, 5, Sort.by("createdAt").ascending());
-            Pageable servicePageable = PageRequest.of(inputPageable.getPageNumber(), inputPageable.getPageSize(), Sort.by("createdAt").descending());
+            Pageable servicePageable = PageRequest.of(inputPageable.getPageNumber(), inputPageable.getPageSize(), Sort.by("createdAt").ascending());
             Page<UserEntity> usersPage = new PageImpl<>(List.of(userEntity), servicePageable, 1L);
             when(userRepository.findAll(servicePageable)).thenReturn(usersPage);
 
@@ -186,7 +186,7 @@ class AdminServiceImplTests {
             assertNotNull(result);
             assertEquals(6, result.getTotalElements());
             assertEquals(5, result.getPageable().getPageSize());
-            assertEquals(Sort.by("createdAt").descending(), result.getPageable().getSort());
+            assertEquals(Sort.by("createdAt").ascending(), result.getPageable().getSort());
             AdminGetUsersResponse userResponse = result.getContent().getFirst();
             assertEquals(TEST_USER_ID, userResponse.id());
             verify(userRepository).findAll(servicePageable);
