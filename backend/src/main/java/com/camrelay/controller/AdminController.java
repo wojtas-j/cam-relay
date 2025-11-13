@@ -50,7 +50,7 @@ public class AdminController {
     })
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/users")
-    public ResponseEntity<Page<AdminGetUsersResponse>> getAllUsers(@PageableDefault(size = 20) Pageable pageable) {
+    public ResponseEntity<Page<AdminGetUsersResponse>> getAllUsers(@PageableDefault(size = 10) Pageable pageable) {
         log.info("Fetching all users for admin request");
         Page<AdminGetUsersResponse> users = adminService.getAllUsers(pageable);
         log.info("Successfully retrieved {} total users", users.getTotalElements());

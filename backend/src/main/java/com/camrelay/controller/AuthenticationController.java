@@ -121,7 +121,7 @@ public class AuthenticationController {
     })
     @RateLimiter(name = "refreshToken")
     @PostMapping("/refresh")
-    public ResponseEntity<Void> refreshToken(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<Map<String, String>> refreshToken(HttpServletRequest request, HttpServletResponse response) {
         log.info("Refreshing access token");
         String refreshToken = null;
         if (request.getCookies() != null) {
@@ -147,7 +147,7 @@ public class AuthenticationController {
         addCookie(response, "refreshToken", newRefreshToken.getToken(), jwtProperties.getRefreshExpirationDays() * 86400000L);
 
         log.info("Access token and refresh token rotated successfully for user: {}", user.getUsername());
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(Map.of("status", "ok"));
     }
 
     /**
@@ -166,10 +166,14 @@ public class AuthenticationController {
     })
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<Void> logout(@AuthenticationPrincipal UserDetails userDetails, HttpServletResponse response) {
         log.info("Logging out user: {}", userDetails.getUsername());
         UserEntity user = authenticationService.findEntityByUsername(userDetails.getUsername());
+
         refreshTokenService.deleteByUser(user);
+        clearCookie(response, "accessToken");
+        clearCookie(response, "refreshToken");
+
         log.info("User logged out successfully: {}", user.getUsername());
         return ResponseEntity.ok().build();
     }
@@ -188,8 +192,28 @@ public class AuthenticationController {
                 .secure(true)
                 .sameSite("None")
                 .path("/")
+                .domain("localhost")
                 .maxAge(maxAgeMs / 1000)
                 .build();
+        response.addHeader("Set-Cookie", cookie.toString());
+    }
+
+    /**
+     * Clears a secure HTTP cookie to the response.
+     * @param response the {@link HttpServletResponse} to which the cookie will be added
+     * @param name the name of the cookie
+     * @since 1.0
+     */
+    private void clearCookie(HttpServletResponse response, String name) {
+        ResponseCookie cookie = ResponseCookie.from(name, "")
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("None")
+                .path("/")
+                .domain("localhost")
+                .maxAge(0)
+                .build();
+
         response.addHeader("Set-Cookie", cookie.toString());
     }
 }

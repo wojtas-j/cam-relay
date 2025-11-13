@@ -6,6 +6,7 @@ import com.camrelay.dto.user.UserResponse;
 import com.camrelay.entity.Role;
 import com.camrelay.entity.UserEntity;
 import com.camrelay.exception.AuthenticationException;
+import com.camrelay.exception.UserAlreadyExistsException;
 import com.camrelay.exception.UserNotFoundException;
 import com.camrelay.repository.UserRepository;
 import com.camrelay.service.interfaces.AdminService;
@@ -46,7 +47,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public Page<AdminGetUsersResponse> getAllUsers(Pageable pageable) {
         log.info("Fetching all users for admin request");
-        Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("createdAt").descending());
+        Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("createdAt").ascending());
         Page<UserEntity> users = userRepository.findAll(sortedPageable);
         Page<AdminGetUsersResponse> userDTOs = users.map(user -> new AdminGetUsersResponse(
                 user.getId(),
@@ -62,7 +63,7 @@ public class AdminServiceImpl implements AdminService {
      * Registers a new user with the provided details.
      * @param request the create user request containing username and password.
      * @return the created UserResponse
-     * @throws AuthenticationException if the username is already taken.
+     * @throws UserAlreadyExistsException if the username is already taken.
      * @since 1.0
      */
     @Override
@@ -71,13 +72,13 @@ public class AdminServiceImpl implements AdminService {
         log.info("Registering new user: {}", request.username());
         if (userRepository.findByUsername(request.username()).isPresent()) {
             log.error("Username already taken: {}", request.username());
-            throw new AuthenticationException("Username already taken");
+            throw new UserAlreadyExistsException("Username already taken");
         }
 
         UserEntity user = UserEntity.builder()
                 .username(request.username())
                 .password(passwordEncoder.encode(request.password()))
-                .roles(Set.of(Role.USER))
+                .roles(request.roles())
                 .build();
         UserEntity savedUser = userRepository.save(user);
         log.info("User created successfully: {}", savedUser.getUsername());

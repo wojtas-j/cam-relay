@@ -1,0 +1,117 @@
+.login-box {
+    width: 360px;
+    padding: 32px;
+    background: white;
+    border-radius: 16px;
+    margin: 120px auto;
+    text-align: center;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.15);
+}
+
+.login-title {
+    margin-bottom: 20px;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.login-box input {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 8px;
+    border: 1px solid #bbb;
+    font-size: 15px;
+    box-sizing: border-box;
+}
+
+.password-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.password-wrapper input {
+    width: 100%;
+    padding-right: 38px;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #4b79ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    background: transparent;
+}
+
+.password-toggle:hover {
+    color: #335ef0;
+}
+
+.login-box button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 16px;
+    border-radius: 8px;
+    border: none;
+    background: #4b79ff;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.login-box button:hover {
+    background: #335ef0;
+}
+
+.login-box * {
+    color: #222;
+    background: white;
+}
+
+.password-toggle * {
+    background: transparent !important;
+}
+
+@media (max-width: 768px) {
+    .login-box {
+        width: 90%;
+        margin: 80px auto;
+        padding: 24px;
+    }
+
+    .login-title {
+        font-size: 22px;
+    }
+
+    .login-box button {
+        font-size: 15px;
+        padding: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .login-box {
+        width: 95%;
+        margin: 60px auto;
+        padding: 20px;
+        border-radius: 12px;
+    }
+
+    .login-title {
+        font-size: 20px;
+    }
+
+    .login-box input {
+        font-size: 14px;
+    }
+
+    .login-box button {
+        font-size: 14px;
+    }
+}

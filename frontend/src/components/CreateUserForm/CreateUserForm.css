@@ -1,0 +1,125 @@
+.create-user-box {
+    width: 380px;
+    padding: 32px;
+    background: white;
+    border-radius: 16px;
+    margin: 120px auto;
+    text-align: center;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
+}
+
+.create-user-title {
+    margin-bottom: 20px;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.create-user-box input[type="text"],
+.create-user-box input[type="password"],
+.create-user-box select {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 8px;
+    border: 1px solid #bbb;
+    font-size: 15px;
+    box-sizing: border-box;
+}
+
+.password-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.password-wrapper input {
+    width: 100%;
+    padding-right: 38px;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #4b79ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    background: transparent;
+}
+
+.password-toggle:hover {
+    color: #335ef0;
+}
+
+.role-selection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 16px;
+    gap: 10px;
+    font-size: 15px;
+}
+
+.role-selection label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.role-selection select {
+    width: 60%;
+    text-align: center;
+    text-align-last: center;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid #bbb;
+    background-color: #fff;
+    appearance: none;
+}
+
+.receiver-checkbox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.create-user-box button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 20px;
+    border-radius: 8px;
+    border: none;
+    background: #4b79ff;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.create-user-box button:hover {
+    background: #335ef0;
+}
+
+@media (max-width: 768px) {
+    .create-user-box {
+        width: 90%;
+        padding: 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    .create-user-box {
+        width: 95%;
+        padding: 20px;
+        border-radius: 12px;
+    }
+
+    .role-selection select {
+        width: 80%;
+    }
+}

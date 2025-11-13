@@ -52,6 +52,7 @@ class AdminControllerTests {
     private static final Long TEST_USER_ID = 2L;
     private static final String TEST_USERNAME = "testuser";
     private static final String TEST_PASSWORD = "Password123!";
+    private static final Set<Role> TEST_ROLES = Set.of(Role.USER);
 
     private final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule())
@@ -151,7 +152,7 @@ class AdminControllerTests {
         @WithMockUser(username = TEST_USERNAME, roles = {"ADMIN"})
         void shouldCreateUserSuccessfully() throws Exception {
             // Arrange
-            CreateUserRequest request = new CreateUserRequest(TEST_USERNAME, TEST_PASSWORD);
+            CreateUserRequest request = new CreateUserRequest(TEST_USERNAME, TEST_PASSWORD, TEST_ROLES);
             UserResponse response = new UserResponse(TEST_USERNAME, Set.of(Role.USER), LocalDateTime.now());
             when(adminService.createUser(request)).thenReturn(response);
 
@@ -176,7 +177,7 @@ class AdminControllerTests {
         @WithMockUser(username = TEST_USERNAME, roles = {"ADMIN"})
         void shouldRejectCreatingWithEmptyUsername() throws Exception {
             // Arrange
-            CreateUserRequest request = new CreateUserRequest("", TEST_PASSWORD);
+            CreateUserRequest request = new CreateUserRequest("", TEST_PASSWORD, TEST_ROLES);
 
             // Act & Assert
             mockMvc.perform(post(ADMIN_URL + "/create")
@@ -201,7 +202,7 @@ class AdminControllerTests {
         @WithMockUser(username = TEST_USERNAME, roles = {"ADMIN"})
         void shouldRejectCreationWithInvalidPassword() throws Exception {
             // Arrange
-            CreateUserRequest request = new CreateUserRequest(TEST_USERNAME, "invalid");
+            CreateUserRequest request = new CreateUserRequest(TEST_USERNAME, "invalid", TEST_ROLES);
 
             // Act & Assert
             mockMvc.perform(post(ADMIN_URL + "/create")
@@ -225,7 +226,7 @@ class AdminControllerTests {
         @WithMockUser(username = TEST_USERNAME, roles = {"ADMIN"})
         void shouldRejectCreationWhenUsernameTaken() throws Exception {
             // Arrange
-            CreateUserRequest request = new CreateUserRequest(TEST_USERNAME, TEST_PASSWORD);
+            CreateUserRequest request = new CreateUserRequest(TEST_USERNAME, TEST_PASSWORD,TEST_ROLES);
             when(adminService.createUser(request))
                     .thenThrow(new UserAlreadyExistsException("Username already taken"));
 

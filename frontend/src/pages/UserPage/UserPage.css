@@ -1,0 +1,140 @@
+.users-page {
+    width: 90%;
+    max-width: 1000px;
+    margin: 100px auto;
+    background: white;
+    padding: 32px;
+    border-radius: 16px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
+}
+
+.users-title {
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.users-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.users-table th,
+.users-table td {
+    padding: 12px 14px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.users-table th {
+    background: #f4f6ff;
+    font-weight: bold;
+}
+
+.users-table tr:hover {
+    background-color: #f9f9f9;
+}
+
+.delete-btn {
+    background: #ff4b4b;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.delete-btn:hover {
+    background: #d63031;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    gap: 12px;
+}
+
+.pagination button {
+    background: #4b79ff;
+    border: none;
+    color: white;
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.pagination button:hover {
+    background: #335ef0;
+}
+
+.pagination button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.loading,
+.error {
+    text-align: center;
+    font-size: 16px;
+    margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+    .users-page {
+        width: 95%;
+        padding: 20px;
+        margin: 60px auto;
+    }
+
+    .users-title {
+        font-size: 20px;
+        margin-bottom: 16px;
+    }
+
+    .users-table th,
+    .users-table td {
+        padding: 8px 10px;
+        font-size: 14px;
+    }
+
+    .pagination {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .pagination span {
+        font-size: 14px;
+    }
+
+    .delete-btn {
+        padding: 4px 8px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 480px) {
+    .users-page {
+        width: 98%;
+        padding: 16px;
+    }
+
+    .users-table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    .users-title {
+        font-size: 18px;
+    }
+
+    .pagination button {
+        padding: 5px 10px;
+        font-size: 13px;
+    }
+}

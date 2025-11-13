@@ -1,0 +1,17 @@
+.footer {
+    text-align: center;
+    padding: 18px;
+    background: rgba(36, 52, 71, 0.2);
+    color: white;
+    font-size: 14px;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+
+@media (max-width: 600px) {
+    .footer {
+        font-size: 12px;
+        padding: 14px;
+    }
+}

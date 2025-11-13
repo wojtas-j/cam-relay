@@ -6,8 +6,9 @@ frontend/node_modules/
 
 # Certs
 *.jks
-*.cer
-*.pfx
+*.crt
+*.key
+*.pem
 
 # Gradle
 .gradle/

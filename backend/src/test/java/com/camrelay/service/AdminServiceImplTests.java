@@ -62,7 +62,7 @@ class AdminServiceImplTests {
 
     @BeforeEach
     void setUp() {
-        createUserRequest = new CreateUserRequest(TEST_USERNAME, TEST_PASSWORD);
+        createUserRequest = new CreateUserRequest(TEST_USERNAME, TEST_PASSWORD, Set.of(Role.USER, Role.ADMIN));
         userEntity = UserEntity.builder()
                 .id(TEST_USER_ID)
                 .username(TEST_USERNAME)
