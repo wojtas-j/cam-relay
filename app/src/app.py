@@ -1,3 +1,4 @@
+#app.py
 import customtkinter as ctk
 from auth import AuthClient
 from login_window import LoginWindow
@@ -15,8 +16,7 @@ def start_app():
     auth = AuthClient()
 
     def on_login_success(user):
-        # Show main app window
-        MainWindow(root, user)
+        MainWindow(root, user, auth)
 
     # Open login window
     LoginWindow(root, auth, on_login_success)

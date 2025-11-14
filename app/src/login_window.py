@@ -1,3 +1,4 @@
+#login_window.py
 import customtkinter as ctk
 from popup import Popup
 
@@ -27,6 +28,9 @@ class LoginWindow(ctk.CTkToplevel):
 
         self.password = ctk.CTkEntry(self, placeholder_text="Password", show="*", width=240)
         self.password.pack(pady=10)
+
+        self.username.insert(0, "admin")
+        self.password.insert(0, "Testadmin123!")
 
         self.show_btn = ctk.CTkButton(self, text="👁 Show", width=90, command=self.toggle_pass)
         self.show_btn.pack()

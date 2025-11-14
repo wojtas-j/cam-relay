@@ -37,34 +37,31 @@ const StreamPage: React.FC = () => {
         setState("connecting");
         appendLog("Connecting to WebSocket...");
 
-        const url = getWebSocketUrl();
-        const ws = new WebSocket(url);
-
+        const ws = new WebSocket(getWebSocketUrl());
         wsRef.current = ws;
 
         ws.onopen = () => {
             setState("open");
-            appendLog("Connected to WebSocket server.");
+            appendLog("Connected.");
             ws.send(JSON.stringify({ type: "ping", payload: "hello" }));
         };
 
         ws.onmessage = (evt) => {
             try {
                 const data = JSON.parse(evt.data);
-
                 appendLog("Received: " + JSON.stringify(data));
 
                 if (data.type === "user-list" && Array.isArray(data.payload)) {
                     setRemoteUsers(data.payload);
                 }
-            } catch {
-                appendLog("Received text: " + evt.data);
+            } catch (e) {
+                appendLog("Received raw: " + evt.data);
             }
         };
 
         ws.onclose = (ev) => {
             setState("closed");
-            appendLog(`Connection closed (code=${ev.code})`);
+            appendLog(`Closed (code=${ev.code})`);
         };
 
         ws.onerror = () => {
@@ -89,7 +86,7 @@ const StreamPage: React.FC = () => {
         };
 
         wsRef.current?.send(JSON.stringify(msg));
-        appendLog("Sent offer (placeholder)");
+        appendLog("Sent offer (test)");
     };
 
     return (
@@ -112,7 +109,8 @@ const StreamPage: React.FC = () => {
             <section className="stream-main">
                 <div className="stream-left">
                     <div className="status">
-                        <strong>WebSocket:</strong> <span className={`badge ${state}`}>{state}</span>
+                        <strong>WebSocket:</strong>{" "}
+                        <span className={`badge ${state}`}>{state}</span>
                     </div>
 
                     <div className="remote-list">

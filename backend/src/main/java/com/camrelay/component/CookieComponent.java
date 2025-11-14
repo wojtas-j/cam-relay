@@ -50,19 +50,4 @@ public class CookieComponent {
 
         response.addHeader("Set-Cookie", cookie.toString());
     }
-
-    /**
-     * Retrieves the value of a cookie by its name.
-     * @param request the incoming HTTP request
-     * @param name cookie name
-     * @return cookie value or null if not present
-     * @since 1.0
-     */
-    public String getCookieValue(HttpServletRequest request, String name) {
-        if (request.getCookies() == null) return null;
-        for (Cookie cookie : request.getCookies()) {
-            if (cookie.getName().equals(name)) return cookie.getValue();
-        }
-        return null;
-    }
 }
