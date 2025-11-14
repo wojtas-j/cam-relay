@@ -26,7 +26,7 @@ public class CookieComponent {
                 .secure(true)
                 .sameSite("None")
                 .path("/")
-                .domain("localhost")
+                //.domain("localhost")
                 .maxAge(maxAgeMs / 1000)
                 .build();
         response.addHeader("Set-Cookie", cookie.toString());
@@ -44,7 +44,7 @@ public class CookieComponent {
                 .secure(true)
                 .sameSite("None")
                 .path("/")
-                .domain("localhost")
+                //.domain("localhost")
                 .maxAge(0)
                 .build();
 
