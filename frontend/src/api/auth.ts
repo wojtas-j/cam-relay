@@ -38,6 +38,12 @@ export const deleteUser = async (id: number) => {
     return res.data;
 };
 
+export const getWebSocketUrl = (path = "/ws") => {
+    const host = window.location.hostname;
+    const port = 8080;
+    return `wss://${host}:${port}${path}`;
+};
+
 export const createUser = async (username: string, password: string, roles: string[]) => {
     try {
         const res = await axiosClient.post("/admin/create", { username, password, roles });

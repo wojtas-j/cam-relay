@@ -41,3 +41,10 @@ initializer:
     - USER
     - RECEIVER
     - ADMIN
+
+websocket:
+  path: "/ws"
+  allowed-origins:
+    - "https://localhost:3000"
+  message-buffer-limit: 512000
+  heartbeat-interval-ms: 30000

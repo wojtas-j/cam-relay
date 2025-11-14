@@ -272,6 +272,22 @@ class GlobalExceptionHandlerTests {
     }
 
     /**
+     * Tests handling of generic {@link WebSocketAuthenticationException}.
+     * @since 1.0
+     */
+    @Test
+    void shouldHandleWebSocketAuthenticationExceptionException() throws Exception {
+        // Act & Assert
+        mockMvc.perform(post("/test/socket-authentication")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.type").value("/problems/websocket-authentication-failed"))
+                .andExpect(jsonPath("$.title").value("WebSocket Authentication Failed"))
+                .andExpect(jsonPath("$.detail").value("Test web socket authentication error"))
+                .andExpect(jsonPath("$.instance").value("/test/socket-authentication"));
+    }
+
+    /**
      * Tests handling of {@link RequestNotPermitted} for rate limit exceeded errors.
      * @since 1.0
      */
@@ -362,6 +378,11 @@ class GlobalExceptionHandlerTests {
         @PostMapping("/test/generic")
         public void throwGenericException() {
             throw new RuntimeException("Test generic error");
+        }
+
+        @PostMapping("/test/socket-authentication")
+        public void throwSocketAuthenticationException() {
+            throw new WebSocketAuthenticationException("Test web socket authentication error");
         }
 
         @PostMapping("/test/rate-limit")

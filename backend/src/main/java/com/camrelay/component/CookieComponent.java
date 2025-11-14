@@ -1,9 +1,15 @@
 package com.camrelay.component;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
 
+/**
+ * Helper for adding / clearing / reading secure cookies.
+ * @since 1.0
+ */
 @Component
 public class CookieComponent {
     /**
@@ -43,5 +49,20 @@ public class CookieComponent {
                 .build();
 
         response.addHeader("Set-Cookie", cookie.toString());
+    }
+
+    /**
+     * Retrieves the value of a cookie by its name.
+     * @param request the incoming HTTP request
+     * @param name cookie name
+     * @return cookie value or null if not present
+     * @since 1.0
+     */
+    public String getCookieValue(HttpServletRequest request, String name) {
+        if (request.getCookies() == null) return null;
+        for (Cookie cookie : request.getCookies()) {
+            if (cookie.getName().equals(name)) return cookie.getValue();
+        }
+        return null;
     }
 }
