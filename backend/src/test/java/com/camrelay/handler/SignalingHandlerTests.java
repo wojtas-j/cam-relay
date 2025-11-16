@@ -146,14 +146,9 @@ class SignalingHandlerTests {
             handler.afterConnectionEstablished(session);
 
             // Assert
-            verify(session, times(1)).close(argThat(status ->
-                    status.getCode() == CloseStatus.NOT_ACCEPTABLE.getCode() &&
-                            "Unauthorized".equals(status.getReason())
-            ));
-
+            verify(session).close(eq(CloseStatus.POLICY_VIOLATION.withReason("Unauthorized")));
             verify(signalingService, never()).countReceivers();
             verify(signalingService).countNonReceivers();
-
             verify(signalingService, never()).register(any(), any());
         }
 

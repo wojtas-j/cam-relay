@@ -1,8 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./StreamPage.css";
-import { getWebSocketUrl } from "../../api/auth";
+import { getWebSocketUrl, getReceivers } from "../../api/auth";
 
 type WSState = "idle" | "connecting" | "open" | "closed" | "error";
+
+interface Receiver {
+    username: string;
+}
 
 const StreamPage: React.FC = () => {
     const wsRef = useRef<WebSocket | null>(null);
@@ -10,139 +14,164 @@ const StreamPage: React.FC = () => {
 
     const [state, setState] = useState<WSState>("idle");
     const [log, setLog] = useState<string[]>([]);
-    const [remoteUsers, setRemoteUsers] = useState<string[]>([]);
+    const [knownReceivers, setKnownReceivers] = useState<string[]>([]);
+    const [onlineReceiver, setOnlineReceiver] = useState<string | null>(null);
 
     const appendLog = (msg: string) => {
-        setLog((prev) => [...prev, `${new Date().toISOString()} — ${msg}`]);
+        setLog((prev) => [...prev, `${msg}`]);
     };
 
     useEffect(() => {
-        if (logEndRef.current) {
-            logEndRef.current.scrollIntoView({ behavior: "smooth" });
-        }
+        logEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [log]);
 
     useEffect(() => {
-        return () => {
-            if (wsRef.current) {
-                wsRef.current.close();
-                wsRef.current = null;
-            }
+        const load = async () => {
+            try {
+                const receivers: Receiver[] = await getReceivers();
+                const usernames = receivers.map((r) => r.username);
+                setKnownReceivers(usernames);
+            } catch {}
         };
+
+        load();
+        return () => wsRef.current?.close();
     }, []);
 
     const connect = () => {
-        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) return;
+        if (knownReceivers.length === 0) {
+            appendLog("No receivers found");
+            return;
+        }
+
+        if (wsRef.current?.readyState === WebSocket.OPEN) return;
 
         setState("connecting");
-        appendLog("Connecting to WebSocket...");
+        appendLog("Connecting…");
 
         const ws = new WebSocket(getWebSocketUrl());
         wsRef.current = ws;
 
         ws.onopen = () => {
             setState("open");
-            appendLog("Connected.");
-            ws.send(JSON.stringify({ type: "ping", payload: "hello" }));
+            appendLog("Connected");
+            ws.send(JSON.stringify({ type: "ping" }));
         };
 
         ws.onmessage = (evt) => {
             try {
                 const data = JSON.parse(evt.data);
-                appendLog("Received: " + JSON.stringify(data));
-
                 if (data.type === "user-list" && Array.isArray(data.payload)) {
-                    setRemoteUsers(data.payload);
+                    const onlineList: string[] = data.payload;
+                    const activeReceiver =
+                        knownReceivers.find((r) => onlineList.includes(r)) || null;
+
+                    setOnlineReceiver(activeReceiver);
                 }
-            } catch (e) {
-                appendLog("Received raw: " + evt.data);
-            }
+            } catch {}
         };
 
-        ws.onclose = (ev) => {
+        ws.onclose = () => {
             setState("closed");
-            appendLog(`Closed (code=${ev.code})`);
+            appendLog("Closed");
+            setOnlineReceiver(null);
         };
 
         ws.onerror = () => {
             setState("error");
-            appendLog("WebSocket error");
+            appendLog("Error");
         };
     };
 
     const disconnect = () => {
         wsRef.current?.close();
         wsRef.current = null;
+
         setState("closed");
-        appendLog("Disconnected manually");
+        appendLog("Disconnected");
+        setOnlineReceiver(null);
     };
 
-    const sendOffer = () => {
-        const msg = {
-            type: "offer",
-            from: "me",
-            to: "target",
-            payload: "SDP_PLACEHOLDER"
-        };
+    const clearLog = () => setLog([]);
 
-        wsRef.current?.send(JSON.stringify(msg));
-        appendLog("Sent offer (test)");
+    const startStream = () => {
+        appendLog("Starting stream…");
     };
+
+    const wsLabel = state === "idle" ? "Not connected" : state;
 
     return (
         <div className="stream-container">
             <header className="stream-header">
-                <h1>Stream Page</h1>
+                <h1>Stream Panel</h1>
+
                 <div className="ws-controls">
                     <button onClick={connect} disabled={state === "connecting" || state === "open"}>
                         Connect
                     </button>
+
                     <button onClick={disconnect} disabled={state !== "open"}>
                         Disconnect
                     </button>
-                    <button onClick={sendOffer} disabled={state !== "open"}>
-                        Send offer (test)
-                    </button>
+
+                    <button onClick={clearLog}>Clear log</button>
                 </div>
             </header>
 
             <section className="stream-main">
                 <div className="stream-left">
+
                     <div className="status">
                         <strong>WebSocket:</strong>{" "}
-                        <span className={`badge ${state}`}>{state}</span>
+                        <span className={`badge ${state}`}>{wsLabel}</span>
                     </div>
 
-                    <div className="remote-list">
-                        <h3>Remote users</h3>
-                        {remoteUsers.length === 0 ? (
-                            <p>No connected users</p>
-                        ) : (
-                            <ul>
-                                {remoteUsers.map((u) => (
-                                    <li key={u}>{u}</li>
-                                ))}
-                            </ul>
-                        )}
+                    {state === "open" && (
+                        <div className="receiver-box">
+                            <h3>Receiver</h3>
+
+                            {onlineReceiver ? (
+                                <p className="receiver-online">
+                                    {onlineReceiver} — Connected
+                                </p>
+                            ) : (
+                                <p className="receiver-offline">
+                                    None online
+                                </p>
+                            )}
+
+                            <div className="receiver-start-wrapper">
+                                <button
+                                    className="start-btn"
+                                    disabled={!onlineReceiver}
+                                    onClick={startStream}
+                                >
+                                    START STREAM
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="logger-box">
+                        <h3>Logger</h3>
+
+                        <div className="logger-scroll">
+                            {log.map((line, i) => (
+                                <div key={i} className="log-line">{line}</div>
+                            ))}
+                            <div ref={logEndRef} />
+                        </div>
                     </div>
                 </div>
 
                 <div className="stream-right">
-                    <h3>Log</h3>
-                    <div className="log">
-                        {log.map((line, i) => (
-                            <div key={i} className="log-line">
-                                {line}
-                            </div>
-                        ))}
-                        <div ref={logEndRef} />
+                    <div className="preview-box">
+                        <h3>Preview</h3>
+                        <div className="preview-content">
+                        </div>
                     </div>
                 </div>
             </section>
-
-            <footer className="stream-footer">
-                <p>Streaming will be added later — currently testing WebSocket/signaling.</p>
-            </footer>
         </div>
     );
 };

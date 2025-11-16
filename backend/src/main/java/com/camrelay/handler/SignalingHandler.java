@@ -1,7 +1,6 @@
 package com.camrelay.handler;
 
 import com.camrelay.dto.socket.SignalingMessage;
-import com.camrelay.entity.Role;
 import com.camrelay.service.SignalingServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -31,33 +30,33 @@ public class SignalingHandler extends TextWebSocketHandler {
     private final SignalingServiceImpl signalingService;
     private final ObjectMapper mapper = new ObjectMapper();
 
+    private static final Set<String> ALLOWED_TYPES =
+            Set.of("offer", "answer", "candidate", "ping");
+
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
         Authentication auth = (Authentication) Objects.requireNonNull(session.getPrincipal());
         Collection<? extends GrantedAuthority> roles = auth.getAuthorities();
-        System.out.println(roles);
+
         boolean isReceiver = roles.stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_RECEIVER"));
 
         boolean isNonReceiver = roles.stream()
                 .noneMatch(a -> a.getAuthority().equals("ROLE_RECEIVER"));
 
-
-        // LIMIT 1 RECEIVER
         if (isReceiver && signalingService.countReceivers() >= 1) {
-            try { session.close(CloseStatus.POLICY_VIOLATION.withReason("Receiver limit reached")); } catch (Exception ignored) {}
+            close(session, "Receiver limit reached");
             return;
         }
 
-        // LIMIT 1 USER/ADMIN (non-receiver)
         if (isNonReceiver && signalingService.countNonReceivers() >= 1) {
-            try { session.close(CloseStatus.POLICY_VIOLATION.withReason("User/Admin limit reached")); } catch (Exception ignored) {}
+            close(session, "User/Admin limit reached");
             return;
         }
 
         String username = (String) session.getAttributes().get("username");
         if (username == null) {
-            try { session.close(CloseStatus.NOT_ACCEPTABLE.withReason("Unauthorized")); } catch (Exception ignored) {}
+            close(session, "Unauthorized");
             return;
         }
 
@@ -71,26 +70,29 @@ public class SignalingHandler extends TextWebSocketHandler {
             String payload = message.getPayload();
             SignalingMessage msg = mapper.readValue(payload.getBytes(StandardCharsets.UTF_8), SignalingMessage.class);
 
+            if (msg.getType() == null || !ALLOWED_TYPES.contains(msg.getType())) {
+                log.warn("Invalid message type: {}", msg.getType());
+                return;
+            }
+
             if ("ping".equals(msg.getType())) {
                 session.sendMessage(new TextMessage("{\"type\":\"pong\"}"));
                 return;
             }
 
-            // minimal validation
-            if (msg.getType() == null || msg.getFrom() == null || msg.getTo() == null) {
-                log.warn("Invalid signaling message received: {}", payload);
+            if (msg.getFrom() == null || msg.getTo() == null) {
+                log.warn("Missing from/to fields: {}", payload);
                 return;
             }
 
-            // only allow sender attribute equal to session username
             String sessionUser = (String) session.getAttributes().get("username");
             if (!msg.getFrom().equals(sessionUser)) {
-                log.warn("Impersonation attempt: message from {} but session user {}", msg.getFrom(), sessionUser);
+                log.warn("Impersonation attempt: msg.from={} but session user={}", msg.getFrom(), sessionUser);
                 return;
             }
 
-            // route message to target (offer/answer/candidate)
             signalingService.route(msg);
+
         } catch (Exception e) {
             log.error("Error handling websocket message: {}", e.getMessage(), e);
         }
@@ -111,5 +113,10 @@ public class SignalingHandler extends TextWebSocketHandler {
         if (username != null) {
             signalingService.unregister(username);
         }
+    }
+
+    private void close(WebSocketSession s, String reason) {
+        try { s.close(CloseStatus.POLICY_VIOLATION.withReason(reason)); }
+        catch (Exception ignored) {}
     }
 }
