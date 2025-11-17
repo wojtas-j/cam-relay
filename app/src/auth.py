@@ -1,12 +1,5 @@
 # auth.py
-import os
 import requests
-import urllib3
-from http import cookies
-
-# Allow disabling InsecureRequestWarning only when explicitly requested (dev/test)
-if os.getenv("APP_ENV") in ("test", "dev") or os.getenv("ALLOW_INSECURE") == "true":
-    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 class AuthClient:
     """
@@ -63,7 +56,6 @@ class AuthClient:
         """
         try:
             url = self._url("/auth/logout")
-            # it's OK if backend doesn't expose logout; ignore non-200 gracefully
             self.session.post(url)
         except Exception:
             pass
@@ -100,6 +92,5 @@ class AuthClient:
         cookie_header = "; ".join([f"{c.name}={c.value}" for c in jar])
         return cookie_header
 
-    # convenience: raw session access (for advanced usage)
     def session_obj(self) -> requests.Session:
         return self.session

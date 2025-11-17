@@ -9,7 +9,7 @@ def start_app():
     ctk.set_default_color_theme("blue")
 
     root = ctk.CTk()
-    root.withdraw()  # hide main window
+    root.withdraw()
     root.title("Cam Relay")
     root.geometry("600x400")
 
