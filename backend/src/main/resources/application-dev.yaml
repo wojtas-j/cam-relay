@@ -21,7 +21,8 @@ spring:
 
 # Server
 server:
-  port: 8080
+  port: 9000
+  address: 0.0.0.0
   ssl:
     enabled: true
     certificate: classpath:certs/localhost.pem
@@ -64,5 +65,6 @@ websocket:
   path: "/ws"
   allowed-origins:
     - "https://localhost:3000"
+    - "https://87.205.113.203:3000"
   message-buffer-limit: 512000
   heartbeat-interval-ms: 30000

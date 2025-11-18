@@ -11,7 +11,7 @@ class AuthClient:
 
     ACCESS_TOKEN_COOKIE_NAME = "accessToken"
 
-    def __init__(self, base_url: str = "https://localhost:8080/api"):
+    def __init__(self, base_url: str = "https://localhost:9000/api"):
         self.base_url = base_url.rstrip("/")
         self.session = requests.Session()
 
