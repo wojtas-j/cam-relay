@@ -280,6 +280,25 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handles {@link WebSocketAuthenticationException} for malformed JSON or unrecognized fields.
+     * @param ex the HTTP message not readable exception
+     * @param request the HTTP request
+     * @return a ResponseEntity containing problem details with HTTP status 400
+     * @since 1.0
+     */
+    @ExceptionHandler(WebSocketAuthenticationException.class)
+    public ResponseEntity<Map<String, Object>> handleWebSocketAuthenticationException(WebSocketAuthenticationException ex, HttpServletRequest request) {
+        log.error("WebSocket authentication error: {}", ex.getMessage(), ex);
+        return buildProblemDetailsResponse(
+                HttpStatus.UNAUTHORIZED,
+                "WebSocket Authentication Failed",
+                ex.getMessage(),
+                "/problems/websocket-authentication-failed",
+                request.getRequestURI()
+        );
+    }
+
+    /**
      * Builds a problem details response in RFC 7807 format.
      * @param status the HTTP status code
      * @param title the title of the error

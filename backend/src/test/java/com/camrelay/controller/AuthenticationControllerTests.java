@@ -1,5 +1,6 @@
 package com.camrelay.controller;
 
+import com.camrelay.component.CookieComponent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -51,7 +52,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @since 1.0
  */
 @WebMvcTest(AuthenticationController.class)
-@ContextConfiguration(classes = {AuthenticationController.class, GlobalExceptionHandler.class, SecurityConfig.class})
+@ContextConfiguration(classes = {AuthenticationController.class, GlobalExceptionHandler.class, SecurityConfig.class, CookieComponent.class})
 @Import(SecurityConfig.class)
 class AuthenticationControllerTests {
 

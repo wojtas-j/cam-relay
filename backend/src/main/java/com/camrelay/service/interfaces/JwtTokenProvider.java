@@ -1,6 +1,7 @@
 package com.camrelay.service.interfaces;
 
 import com.camrelay.exception.AuthenticationException;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.Authentication;
 
 /**

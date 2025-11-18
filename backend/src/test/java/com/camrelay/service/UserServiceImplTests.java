@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -55,6 +56,57 @@ public class UserServiceImplTests {
                 .roles(Set.of(Role.USER))
                 .build();
     }
+
+    @Nested
+    class GetUsersByRoleTests {
+
+        /**
+         * Tests fetching users by role successfully.
+         * @since 1.0
+         */
+        @Test
+        void shouldReturnUsersByRoleSuccessfully() {
+            // Arrange
+            UserEntity receiverUser = UserEntity.builder()
+                    .username("receiver1")
+                    .roles(Set.of(Role.RECEIVER))
+                    .build();
+
+            when(userRepository.findAllByRolesContaining(Role.RECEIVER))
+                    .thenReturn(List.of(receiverUser));
+
+            // Act
+            var result = userService.getUsersByRole(Role.RECEIVER);
+
+            // Assert
+            assertThat(result).isNotNull().hasSize(1);
+            assertThat(result.get(0).username()).isEqualTo("receiver1");
+
+            verify(userRepository).findAllByRolesContaining(Role.RECEIVER);
+        }
+
+        /**
+         * Tests throwing UsersNotFoundException when no users are found with the specified role.
+         * @since 1.0
+         */
+        @Test
+        void shouldThrowUsersNotFoundExceptionWhenNoUsersFound() {
+            // Arrange
+            when(userRepository.findAllByRolesContaining(Role.RECEIVER))
+                    .thenReturn(List.of());
+
+            // Act & Assert
+            var exception = assertThrows(
+                    com.camrelay.exception.UserNotFoundException.class,
+                    () -> userService.getUsersByRole(Role.RECEIVER)
+            );
+
+            assertThat(exception.getMessage()).isEqualTo("No users found with role: RECEIVER");
+
+            verify(userRepository).findAllByRolesContaining(Role.RECEIVER);
+        }
+    }
+
 
     @Nested
     class DeleteAccountTests {
