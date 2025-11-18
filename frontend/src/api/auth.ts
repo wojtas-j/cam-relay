@@ -1,8 +1,8 @@
-import axios, { AxiosError, type AxiosInstance } from "axios";
+import axios, { AxiosError} from "axios";
 import { logout as backendLogout } from "./auth";
 
-export const axiosClient: AxiosInstance = axios.create({
-    baseURL: "https://localhost:8080/api",
+export const axiosClient = axios.create({
+    baseURL: `https://${window.location.hostname}:9000/api`,
     withCredentials: true,
 });
 
@@ -39,8 +39,11 @@ export const deleteUser = async (id: number) => {
 };
 
 export const getWebSocketUrl = (path = "/ws") => {
-    const host = window.location.hostname;
-    const port = 8080;
+    const isLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+    const host = isLocal
+        ? window.location.hostname
+        : "87.205.113.203";
+    const port = 9000;
     return `wss://${host}:${port}${path}`;
 };
 

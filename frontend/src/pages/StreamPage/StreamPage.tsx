@@ -9,7 +9,19 @@ type WSState = "idle" | "connecting" | "open" | "closed" | "error";
 interface Receiver { username: string; }
 
 const ICE_CONFIG: RTCConfiguration = {
-    iceServers: [{ urls: ["stun:stun.l.google.com:19302"] }]
+    iceServers: [
+        {
+            urls: "turn:87.205.113.203:9001?transport=udp",
+            username: "webrtc",
+            credential: "supersecretpassword"
+        },
+        {
+            urls: "turn:87.205.113.203:9001?transport=tcp",
+            username: "webrtc",
+            credential: "supersecretpassword"
+        },
+        { urls: "stun:stun.l.google.com:19302" }
+    ]
 };
 
 const StreamPage: React.FC = () => {
@@ -124,7 +136,19 @@ const StreamPage: React.FC = () => {
     const ensureLocalStream = async (): Promise<MediaStream> => {
         if (localStreamRef.current) return localStreamRef.current;
 
-        const s = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+        const s = await navigator.mediaDevices.getUserMedia({
+            audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                sampleRate: 48000
+            },
+            video: {
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
+                frameRate: { ideal: 60, max: 60 }
+            }
+        });
+
         localStreamRef.current = s;
 
         s.getAudioTracks().forEach(t => t.enabled = false);
@@ -141,25 +165,59 @@ const StreamPage: React.FC = () => {
 
 
     const startStream = async () => {
-        if (!onlineReceiver) { addLog("No receiver online"); return; }
-        if (!username) { addLog("No username"); return; }
+        if (!onlineReceiver) { addLog("❌ No receiver online"); return; }
+        if (!username) { addLog("❌ No username"); return; }
         try {
+            addLog("Creating RTCPeerConnection...");
             const pc = new RTCPeerConnection(ICE_CONFIG);
             pcRef.current = pc;
+
             const local = await ensureLocalStream();
-            for (const t of local.getTracks()) pc.addTrack(t, local);
-            pc.onicecandidate = (e) => { if (e.candidate) sendSignal("candidate", e.candidate.toJSON(), onlineReceiver); };
-            pc.onconnectionstatechange = () => addLog("Peer connection: " + pc.connectionState);
+
+            for (const t of local.getTracks()) {
+                addLog("Adding track: " + t.kind);
+                pc.addTrack(t, local);
+            }
+
+            const videoTrack = local.getVideoTracks()[0];
+            const sender = pc.getSenders().find(s => s.track === videoTrack);
+            if (sender) {
+                const params = sender.getParameters();
+                if (!params.encodings) params.encodings = [{}];
+
+                params.encodings[0].maxBitrate = 5_000_000;
+                params.encodings[0].maxFramerate = 60;
+                params.encodings[0].networkPriority = "high";
+                params.encodings[0].scaleResolutionDownBy = 1.0;
+
+                await sender.setParameters(params);
+            }
+
+
+            pc.onicecandidate = (e) => {
+                if (e.candidate) {
+                    sendSignal("candidate", e.candidate.toJSON(), onlineReceiver);
+                }
+            };
+
+            pc.onconnectionstatechange = () =>
+                addLog("PeerConnection state = " + pc.connectionState);
+
             const offer = await pc.createOffer();
+
             await pc.setLocalDescription(offer);
+
             sendSignal("offer", offer, onlineReceiver);
+
             setHasStream(true);
-            addLog("Offer sent");
-        } catch (_e) {
-            addLog("Start stream failed: ");
+
+        } catch (e: any) {
+            addLog("❌ Start stream failed: " + e.message);
+            console.error(e);
             cleanupPeer();
         }
     };
+
 
     const stopStreamInternal = () => {
         cleanupPeer();
