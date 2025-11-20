@@ -38,7 +38,7 @@ const StreamPage: React.FC = () => {
     const [username, setUsername] = useState<string | null>(null);
 
     const [hasStream, setHasStream] = useState(false);
-    const [mutedStream, setMutedStream] = useState(false);
+    const [mutedStream, setMutedStream] = useState(true);
     const [mutedMic, setMutedMic] = useState(false);
     const [cameraOn, setCameraOn] = useState(true);
     const [volume, setVolume] = useState(100);
@@ -140,6 +140,8 @@ const StreamPage: React.FC = () => {
             audio: {
                 echoCancellation: true,
                 noiseSuppression: true,
+                autoGainControl: true,
+                channelCount: 2,
                 sampleRate: 48000
             },
             video: {
@@ -151,18 +153,16 @@ const StreamPage: React.FC = () => {
 
         localStreamRef.current = s;
 
-        s.getAudioTracks().forEach(t => t.enabled = false);
-        setMutedStream(true);
+        s.getAudioTracks().forEach(t => t.enabled = !mutedMic);
 
         if (previewRef.current) {
             previewRef.current.srcObject = s;
-            previewRef.current.muted = false;
+            previewRef.current.muted = mutedStream;
             previewRef.current.volume = volume / 100;
         }
 
         return s;
     };
-
 
     const startStream = async () => {
         if (!onlineReceiver) { addLog("❌ No receiver online"); return; }
@@ -173,6 +173,8 @@ const StreamPage: React.FC = () => {
             pcRef.current = pc;
 
             const local = await ensureLocalStream();
+            local.getAudioTracks().forEach(t => t.enabled = true);
+            setMutedMic(false);
 
             for (const t of local.getTracks()) {
                 addLog("Adding track: " + t.kind);
@@ -192,7 +194,6 @@ const StreamPage: React.FC = () => {
 
                 await sender.setParameters(params);
             }
-
 
             pc.onicecandidate = (e) => {
                 if (e.candidate) {
@@ -222,8 +223,7 @@ const StreamPage: React.FC = () => {
     const stopStreamInternal = () => {
         cleanupPeer();
         setHasStream(false);
-        setMutedMic(false);
-        setMutedStream(false);
+        setMutedStream(true);
         setCameraOn(true);
         addLog("Local stream stopped");
     };
@@ -240,10 +240,19 @@ const StreamPage: React.FC = () => {
         if (previewRef.current) previewRef.current.srcObject = null;
     };
 
-    const toggleMic = () => {
+    const toggleMic = async () => {
+        if (!localStreamRef.current) {
+            try {
+                await ensureLocalStream();
+            } catch (e) {
+                addLog("getUserMedia failed: " + String(e));
+                return;
+            }
+        }
         if (!localStreamRef.current) return;
-        localStreamRef.current.getAudioTracks().forEach(t => t.enabled = !t.enabled);
-        setMutedMic(p => !p);
+        const newMuted = !mutedMic;
+        localStreamRef.current.getAudioTracks().forEach(t => t.enabled = !newMuted);
+        setMutedMic(newMuted);
     };
 
     const toggleCamera = () => {
@@ -252,12 +261,19 @@ const StreamPage: React.FC = () => {
         setCameraOn(p => !p);
     };
 
-    const toggleStreamMute = () => {
-        if (!localStreamRef.current) return;
-
+    const toggleStreamMute = async () => {
+        if (!localStreamRef.current) {
+            try {
+                await ensureLocalStream();
+            } catch (e) {
+                addLog("getUserMedia failed: " + String(e));
+                return;
+            }
+        }
         const newMuted = !mutedStream;
-        localStreamRef.current.getAudioTracks().forEach(t => t.enabled = !newMuted);
-
+        if (previewRef.current) {
+            previewRef.current.muted = newMuted;
+        }
         setMutedStream(newMuted);
     };
 
@@ -292,7 +308,7 @@ const StreamPage: React.FC = () => {
                         <h3>Preview</h3>
 
                         <div className="preview-stage">
-                            <video ref={previewRef} className="preview-video" autoPlay muted playsInline />
+                            <video ref={previewRef} className="preview-video" autoPlay playsInline />
                         </div>
 
                         <div className="controls-area">

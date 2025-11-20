@@ -1,3 +1,4 @@
+#virtual_cam.py
 import threading, queue, time, numpy as np
 import pyvirtualcam
 from pyvirtualcam import PixelFormat
@@ -57,4 +58,6 @@ class VirtualCamera:
                     cam.send(frame[:,:,::-1])
                     cam.sleep_until_next_frame()
                     last_send = time.time()
-        except Exception: return
+        except Exception as e:
+            print(f"[VIRTUAL CAMERA ERROR] {e}")
+            return

@@ -32,7 +32,8 @@ class WebSocketClient:
     def _log_status(self, msg: str):
         try:
             self.on_status(msg)
-        except Exception:
+        except Exception as e:
+            print(f"[WEBSOCKET CLIENT ERROR - LOG STATUS] {e}")
             pass
 
     def _on_open(self, ws):
@@ -41,7 +42,8 @@ class WebSocketClient:
     def _on_message(self, ws, message):
         try:
             self.on_message(message)
-        except Exception:
+        except Exception as e:
+            print(f"[WEBSOCKET CLIENT ERROR - ON MESSAGE] {e}")
             traceback.print_exc()
 
     def _on_close(self, ws, close_status_code, close_msg):
@@ -93,7 +95,8 @@ class WebSocketClient:
         if self._ws_app:
             try:
                 self._ws_app.close()
-            except Exception:
+            except Exception as e:
+                print(f"[WEBSOCKET CLIENT ERROR - DISCONNECT] {e}")
                 pass
         # wait a little for clean close
         if self._thread:

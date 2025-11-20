@@ -65,6 +65,12 @@ class MainWindow(ctk.CTkToplevel):
         )
         self.stream_label.pack(pady=10)
 
+        ctk.CTkLabel(self, text="Audio Level:", font=ctk.CTkFont(size=18)).pack(pady=(10, 5))
+        self.audio_slider = ctk.CTkSlider(self, from_=0, to=1, number_of_steps=100)
+        self.audio_slider.pack(pady=5)
+        self.audio_slider.set(0)
+        self.audio_slider.configure(state="disabled")
+
         # BUTTONS FRAME
         frame = ctk.CTkFrame(self)
         frame.pack(padx=20, pady=25)
@@ -92,6 +98,8 @@ class MainWindow(ctk.CTkToplevel):
         self.user_list = []
         self.grab_set()
         self.focus_force()
+
+        self._update_audio_meter()
 
     # --------------------------
     # INTERNAL HELPERS
@@ -132,7 +140,7 @@ class MainWindow(ctk.CTkToplevel):
         Otherwise open preview window (reads frames produced by WebRTCReceiver).
         """
         if not self.webrtc.has_stream:
-            Popup.info(self, "No active stream to preview")
+            Popup.error(self, "No active stream to preview")
             return
 
         # if preview already open -> stop it
@@ -200,7 +208,8 @@ class MainWindow(ctk.CTkToplevel):
     def _on_ws_message(self, message: str):
         try:
             data = json.loads(message)
-        except:
+        except Exception as e:
+            print(f"[MAIN WINDOW - ON MESSAGE] {e}")
             return
 
         msg_type = data.get("type")
@@ -265,3 +274,26 @@ class MainWindow(ctk.CTkToplevel):
     def _clear_users(self):
         self.user_list = []
         self.connected_users_var.set("No connected users")
+
+    # --------------------------
+    # AUDIO METER
+    # --------------------------
+
+    def _update_audio_meter(self):
+        """
+        Periodically reads audio level from WebRTCReceiver and updates slider.
+        """
+        try:
+            if self.webrtc.has_stream:
+                self.audio_slider.configure(state="normal")
+                level = getattr(self.webrtc, "audio_level", 0.0)
+                self.audio_slider.set(level)
+            else:
+                self.audio_slider.set(0)
+                self.audio_slider.configure(state="disabled")
+        except Exception as e:
+            print(f"[MAIN WINDOW - AUDIO METER] {e}")
+            pass
+
+        # call again in 50ms
+        self.after(50, self._update_audio_meter)
