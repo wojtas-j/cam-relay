@@ -31,7 +31,8 @@ class AuthClient:
         if resp.status_code != 200:
             try:
                 msg = resp.json().get("message", "Login failed")
-            except Exception:
+            except Exception as e:
+                print(f"[AUTH ERROR - LOGIN] {e}")
                 msg = f"Login failed (status {resp.status_code})"
             raise Exception(msg)
 
@@ -57,7 +58,8 @@ class AuthClient:
         try:
             url = self._url("/auth/logout")
             self.session.post(url)
-        except Exception:
+        except Exception as e:
+            print(f"[AUTH ERROR - LOGOUT] {e}")
             pass
         # clear local cookie
         self.session.cookies.pop(self.ACCESS_TOKEN_COOKIE_NAME, None)
@@ -72,7 +74,8 @@ class AuthClient:
         if resp.status_code != 200:
             try:
                 msg = resp.json().get("message", "Cannot fetch user")
-            except Exception:
+            except Exception as e:
+                print(f"[AUTH ERROR - GET CURRENT USER] {e}")
                 msg = "Cannot fetch user"
             raise Exception(msg)
         return resp.json()
