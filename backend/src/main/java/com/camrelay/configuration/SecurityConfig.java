@@ -1,5 +1,6 @@
 package com.camrelay.configuration;
 
+import com.camrelay.properties.CorsProperties;
 import com.camrelay.service.JwtTokenProviderImpl;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
@@ -30,10 +31,12 @@ public class SecurityConfig {
 
     private final JwtTokenProviderImpl jwtTokenProvider;
     private final UserDetailsService userDetailsService;
+    private final CorsProperties corsProperties;
 
-    public SecurityConfig(JwtTokenProviderImpl jwtTokenProvider, @Lazy UserDetailsService userDetailsService) {
+    public SecurityConfig(JwtTokenProviderImpl jwtTokenProvider, @Lazy UserDetailsService userDetailsService, CorsProperties corsProperties) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.userDetailsService = userDetailsService;
+        this.corsProperties = corsProperties;
     }
 
     /**
@@ -129,7 +132,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("https://localhost:3000", "https://192.168.100.3:3000", "https://87.205.113.203:3000"));
+        configuration.setAllowedOrigins(corsProperties.getAllowedOrigins());
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Set-Cookie"));
