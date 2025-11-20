@@ -30,6 +30,11 @@ const StreamPage: React.FC = () => {
     const localStreamRef = useRef<MediaStream | null>(null);
     const previewRef = useRef<HTMLVideoElement | null>(null);
 
+    const audioCtxRef = useRef<AudioContext | null>(null);
+    const analyserRef = useRef<AnalyserNode | null>(null);
+    const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+    const rafRef = useRef<number | null>(null);
+
     const [state, setState] = useState<WSState>("idle");
     const [logs, setLogs] = useState<string[]>([]);
     const [receivers, setReceivers] = useState<string[]>([]);
@@ -38,10 +43,13 @@ const StreamPage: React.FC = () => {
     const [username, setUsername] = useState<string | null>(null);
 
     const [hasStream, setHasStream] = useState(false);
-    const [mutedStream, setMutedStream] = useState(false);
+    const [mutedStream, setMutedStream] = useState(true);
     const [mutedMic, setMutedMic] = useState(false);
     const [cameraOn, setCameraOn] = useState(true);
     const [volume, setVolume] = useState(100);
+
+    // audio level (0 - 100)
+    const [audioLevel, setAudioLevel] = useState(0);
 
     useEffect(() => {
         (async () => {
@@ -66,6 +74,7 @@ const StreamPage: React.FC = () => {
             cleanupPeer();
             wsRef.current?.close();
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const addLog = (m: string) => setLogs(prev => [...prev, `${new Date().toISOString()}  ${m}`]);
@@ -151,18 +160,85 @@ const StreamPage: React.FC = () => {
 
         localStreamRef.current = s;
 
-        s.getAudioTracks().forEach(t => t.enabled = false);
-        setMutedStream(true);
+        // Respect mutedMic state: control whether audio tracks are enabled (sent)
+        s.getAudioTracks().forEach(t => t.enabled = !mutedMic);
 
         if (previewRef.current) {
             previewRef.current.srcObject = s;
-            previewRef.current.muted = false;
+            // mutedStream controls local playback only
+            previewRef.current.muted = mutedStream;
             previewRef.current.volume = volume / 100;
+        }
+
+        // initialize analyzer for audio level measurement (measures source, independent of preview muted)
+        try {
+            if (!audioCtxRef.current) {
+                const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+                audioCtxRef.current = ctx;
+                const source = ctx.createMediaStreamSource(s);
+                sourceRef.current = source;
+
+                const analyser = ctx.createAnalyser();
+                analyser.fftSize = 2048;
+                analyserRef.current = analyser;
+
+                source.connect(analyser);
+
+                startMeterLoop();
+            }
+        } catch (e) {
+            addLog("AudioContext init failed: " + String(e));
         }
 
         return s;
     };
 
+    const startMeterLoop = () => {
+        const analyser = analyserRef.current;
+        const ctx = audioCtxRef.current;
+        if (!analyser || !ctx) return;
+
+        const data = new Uint8Array(analyser.fftSize);
+        const loop = () => {
+            analyser.getByteTimeDomainData(data);
+            // compute RMS
+            let sum = 0;
+            for (let i = 0; i < data.length; i++) {
+                const v = (data[i] - 128) / 128;
+                sum += v * v;
+            }
+            const rms = Math.sqrt(sum / data.length);
+            const level = Math.min(1, rms * 1.4); // scale for better UX
+            setAudioLevel(Math.round(level * 100));
+            rafRef.current = requestAnimationFrame(loop);
+        };
+        if (rafRef.current) cancelAnimationFrame(rafRef.current);
+        rafRef.current = requestAnimationFrame(loop);
+    };
+
+    const stopMeterLoop = () => {
+        if (rafRef.current) {
+            cancelAnimationFrame(rafRef.current);
+            rafRef.current = null;
+        }
+        try {
+            if (analyserRef.current && sourceRef.current && audioCtxRef.current) {
+                sourceRef.current.disconnect(analyserRef.current);
+            }
+        } catch {}
+        try {
+            analyserRef.current = null;
+            if (sourceRef.current) sourceRef.current = null;
+        } catch {}
+        try {
+            if (audioCtxRef.current) {
+                // don't close audio context too aggressively if other things may use it,
+                // but safe to close when stream stops
+                audioCtxRef.current.close().catch(() => {});
+            }
+        } catch {}
+        audioCtxRef.current = null;
+    };
 
     const startStream = async () => {
         if (!onlineReceiver) { addLog("❌ No receiver online"); return; }
@@ -173,6 +249,8 @@ const StreamPage: React.FC = () => {
             pcRef.current = pc;
 
             const local = await ensureLocalStream();
+            local.getAudioTracks().forEach(t => t.enabled = true);
+            setMutedMic(false);
 
             for (const t of local.getTracks()) {
                 addLog("Adding track: " + t.kind);
@@ -222,9 +300,9 @@ const StreamPage: React.FC = () => {
     const stopStreamInternal = () => {
         cleanupPeer();
         setHasStream(false);
-        setMutedMic(false);
-        setMutedStream(false);
+        setMutedStream(true);
         setCameraOn(true);
+        setAudioLevel(0);
         addLog("Local stream stopped");
     };
 
@@ -238,12 +316,24 @@ const StreamPage: React.FC = () => {
         } catch {}
         localStreamRef.current = null;
         if (previewRef.current) previewRef.current.srcObject = null;
+        stopMeterLoop();
     };
 
-    const toggleMic = () => {
+    const toggleMic = async () => {
+        // toggles sending audio over WebRTC
+        if (!localStreamRef.current) {
+            // if stream not initialized, initialize to get tracks and analyzer
+            try {
+                await ensureLocalStream();
+            } catch (e) {
+                addLog("getUserMedia failed: " + String(e));
+                return;
+            }
+        }
         if (!localStreamRef.current) return;
-        localStreamRef.current.getAudioTracks().forEach(t => t.enabled = !t.enabled);
-        setMutedMic(p => !p);
+        const newMuted = !mutedMic;
+        localStreamRef.current.getAudioTracks().forEach(t => t.enabled = !newMuted);
+        setMutedMic(newMuted);
     };
 
     const toggleCamera = () => {
@@ -252,12 +342,20 @@ const StreamPage: React.FC = () => {
         setCameraOn(p => !p);
     };
 
-    const toggleStreamMute = () => {
-        if (!localStreamRef.current) return;
-
+    const toggleStreamMute = async () => {
+        // controls only local playback (muting the preview element), not the sent tracks
+        if (!localStreamRef.current) {
+            try {
+                await ensureLocalStream();
+            } catch (e) {
+                addLog("getUserMedia failed: " + String(e));
+                return;
+            }
+        }
         const newMuted = !mutedStream;
-        localStreamRef.current.getAudioTracks().forEach(t => t.enabled = !newMuted);
-
+        if (previewRef.current) {
+            previewRef.current.muted = newMuted;
+        }
         setMutedStream(newMuted);
     };
 
@@ -292,7 +390,7 @@ const StreamPage: React.FC = () => {
                         <h3>Preview</h3>
 
                         <div className="preview-stage">
-                            <video ref={previewRef} className="preview-video" autoPlay muted playsInline />
+                            <video ref={previewRef} className="preview-video" autoPlay playsInline />
                         </div>
 
                         <div className="controls-area">
@@ -327,6 +425,11 @@ const StreamPage: React.FC = () => {
                                     }
                                 }}
                                 />
+                            </div>
+
+                            <div className="audio-level-area">
+                                <label className="audio-level-label">Sent audio level: {audioLevel}%</label>
+                                <input className="audio-level-slider" type="range" min={0} max={100} value={audioLevel} readOnly />
                             </div>
                         </div>
                     </div>

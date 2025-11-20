@@ -29,7 +29,6 @@ services:
       - "9001:9001/udp"
       - "9001:9001/tcp"
       - "49152-49200:49152-49200/udp"
-      # Jeśli potrzebujesz TCP relay, odkomentuj:
       # - "49152-49200:49152-49200/tcp"
     networks:
       app-network:
