@@ -1,5 +1,9 @@
 # auth.py
+import os
+from dotenv import load_dotenv
 import requests
+
+load_dotenv()
 
 class AuthClient:
     """
@@ -11,7 +15,11 @@ class AuthClient:
 
     ACCESS_TOKEN_COOKIE_NAME = "accessToken"
 
-    def __init__(self, base_url: str = "https://localhost:9000/api"):
+    def __init__(self, base_url: str = None):
+        api_port = os.getenv("SPRING_PORT")
+        #api_host = os.getenv("PUBLIC_HOST")
+        if (base_url is None) or (base_url == ""):
+            base_url = f"https://localhost:{api_port}/api"
         self.base_url = base_url.rstrip("/")
         self.session = requests.Session()
 

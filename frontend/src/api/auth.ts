@@ -2,7 +2,7 @@ import axios, { AxiosError} from "axios";
 import { logout as backendLogout } from "./auth";
 
 export const axiosClient = axios.create({
-    baseURL: `https://${window.location.hostname}:9000/api`,
+    baseURL: `https://${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api`,
     withCredentials: true,
 });
 
@@ -42,8 +42,8 @@ export const getWebSocketUrl = (path = "/ws") => {
     const isLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname);
     const host = isLocal
         ? window.location.hostname
-        : "87.205.113.203";
-    const port = 9000;
+        : import.meta.env.VITE_API_HOST;
+    const port = Number(import.meta.env.VITE_API_PORT);
     return `wss://${host}:${port}${path}`;
 };
 
@@ -85,6 +85,22 @@ export const createUser = async (username: string, password: string, roles: stri
             data,
         };
     }
+};
+
+export const ICE_CONFIG: RTCConfiguration = {
+    iceServers: [
+        {
+            urls: `turn:${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_TURN_PORT}?transport=udp`,
+            username: import.meta.env.VITE_TURN_USERNAME,
+            credential: import.meta.env.VITE_TURN_PASSWORD
+        },
+        {
+            urls: `turn:${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_TURN_PORT}?transport=tcp`,
+            username: import.meta.env.VITE_TURN_USERNAME,
+            credential: import.meta.env.VITE_TURN_PASSWORD
+        },
+        { urls: import.meta.env.VITE_STUN_URL }
+    ]
 };
 
 let isRefreshing = false;
