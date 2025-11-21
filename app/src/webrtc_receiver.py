@@ -4,12 +4,24 @@ import threading
 import traceback
 import numpy as np
 import cv2
+import os
 from typing import Callable, Optional, Dict, Any
 from aiortc import RTCPeerConnection, RTCSessionDescription, RTCIceServer, RTCConfiguration
 from aiortc.contrib.media import MediaBlackhole
+from dotenv import load_dotenv
 
 from virtual_cam import VirtualCamera
 from vbcable_player import VBCablePlayer
+
+load_dotenv()
+
+API_HOST = os.getenv("PUBLIC_IP")
+API_PORT = os.getenv("SPRING_PORT")
+FRONTEND_PORT = os.getenv("FRONTEND_PORT")
+TURN_PORT = os.getenv("TURN_PORT")
+TURN_USERNAME = os.getenv("TURN_USERNAME")
+TURN_PASSWORD = os.getenv("TURN_PASSWORD")
+STUN_URL = os.getenv("STUN_URL")
 
 
 class WebRTCReceiver:
@@ -89,15 +101,15 @@ class WebRTCReceiver:
             RTCConfiguration(
                 iceServers=[
                     RTCIceServer(
-                        urls=["turn:87.205.113.203:9001?transport=udp"],
-                        username="webrtc",
-                        credential="supersecretpassword"),
+                        urls=[f"turn:{API_HOST}:{TURN_PORT}?transport=udp"],
+                        username=TURN_USERNAME,
+                        credential=TURN_PASSWORD),
                     RTCIceServer(
-                        urls=["turn:87.205.113.203:9001?transport=tcp"],
-                        username="webrtc",
-                        credential="supersecretpassword"),
+                        urls=[f"turn:{API_HOST}:{TURN_PORT}?transport=tcp"],
+                        username=TURN_USERNAME,
+                        credential=TURN_PASSWORD),
                     RTCIceServer(
-                        urls=["stun:stun.l.google.com:19302"])
+                        urls=[STUN_URL])
                 ]
             )
         )

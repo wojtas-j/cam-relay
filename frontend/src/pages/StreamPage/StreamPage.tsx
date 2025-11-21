@@ -1,28 +1,12 @@
 /* eslint-disable no-empty */
 import React, { useEffect, useRef, useState } from "react";
 import "./StreamPage.css";
-import { getWebSocketUrl, getReceivers, getCurrentUser } from "../../api/auth";
+import {getWebSocketUrl, getReceivers, getCurrentUser, ICE_CONFIG} from "../../api/auth";
 import LogsPopup from "../../components/Popup/LogsPopup";
 
 type WSState = "idle" | "connecting" | "open" | "closed" | "error";
 
 interface Receiver { username: string; }
-
-const ICE_CONFIG: RTCConfiguration = {
-    iceServers: [
-        {
-            urls: "turn:87.205.113.203:9001?transport=udp",
-            username: "webrtc",
-            credential: "supersecretpassword"
-        },
-        {
-            urls: "turn:87.205.113.203:9001?transport=tcp",
-            username: "webrtc",
-            credential: "supersecretpassword"
-        },
-        { urls: "stun:stun.l.google.com:19302" }
-    ]
-};
 
 const StreamPage: React.FC = () => {
     const wsRef = useRef<WebSocket | null>(null);
@@ -126,7 +110,7 @@ const StreamPage: React.FC = () => {
         stopStreamInternal();
     };
 
-    const sendSignal = (type: string, payload: any, to: string) => {
+    const sendSignal = (type: string, payload: unknown, to: string) => {
         if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) { addLog("WS not open"); return; }
         if (!username) { addLog("No username"); return; }
         const msg = { type, from: username, to, payload: typeof payload === "string" ? payload : JSON.stringify(payload) };
@@ -212,8 +196,9 @@ const StreamPage: React.FC = () => {
 
             setHasStream(true);
 
-        } catch (e: any) {
-            addLog("❌ Start stream failed: " + e.message);
+        } catch (e: unknown) {
+            const message = e instanceof Error ? e.message : String(e);
+            addLog("❌ Start stream failed: " + message);
             console.error(e);
             cleanupPeer();
         }

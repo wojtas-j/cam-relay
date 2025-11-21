@@ -21,12 +21,19 @@ spring:
 
 # Server
 server:
-  port: 9000
+  port: ${SPRING_PORT}
   address: 0.0.0.0
   ssl:
     enabled: true
     certificate: classpath:certs/localhost.pem
     certificate-private-key: classpath:certs/localhost-key.pem
+
+# CORS
+cors:
+  allowed-origins:
+    - "https://localhost:${FRONTEND_PORT}"
+    - "https://${PUBLIC_IP}:${FRONTEND_PORT}"
+    - "https://${IPV4_IP}:${FRONTEND_PORT}"
 
 # JWT
 jwt:
@@ -64,7 +71,7 @@ initializer:
 websocket:
   path: "/ws"
   allowed-origins:
-    - "https://localhost:3000"
-    - "https://87.205.113.203:3000"
+    - "https://localhost:${FRONTEND_PORT}"
+    - "https://${PUBLIC_IP}:${FRONTEND_PORT}"
   message-buffer-limit: 512000
   heartbeat-interval-ms: 30000

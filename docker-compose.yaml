@@ -15,6 +15,14 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    deploy: 
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 1024M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
     networks:
       app-network:
         ipv4_address: 192.168.100.2
