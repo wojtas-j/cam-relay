@@ -31,7 +31,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const logoutUser = async () => {
+        window.dispatchEvent(new Event("stop-stream"));
+
         await logout();
+
         setUser(null);
     };
 
@@ -48,6 +51,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         initialize();
 
         const handleForceLogout = () => {
+            window.dispatchEvent(new Event("stop-stream"));
+
             setUser(null);
             setLoading(false);
         };
