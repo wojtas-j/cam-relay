@@ -1,0 +1,89 @@
+services:
+  db:
+    image: postgres:17.6-alpine
+    container_name: postgres_db_camrelay
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    depends_on:
+      - turn
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: 0.50
+          memory: 1024M
+        reservations:
+          cpus: 0.25
+          memory: 256M
+    networks:
+      app-network:
+        ipv4_address: 192.168.100.2
+
+  turn:
+    image: instrumentisto/coturn
+    container_name: turn_server
+    restart: unless-stopped
+    volumes:
+      - ./turnserver.conf:/etc/coturn/turnserver.conf
+    ports:
+      - "9001:9001/udp"
+      - "9001:9001/tcp"
+      - "49152-49200:49152-49200/udp"
+      # - "49152-49200:49152-49200/tcp"
+    networks:
+      app-network:
+        ipv4_address: 192.168.100.3
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: camrelay_backend
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "9000:9000"
+    networks:
+      app-network:
+        ipv4_address: 192.168.100.4
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: camrelay_frontend
+    restart: unless-stopped
+    env_file:
+      - ./frontend/.env.production
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - "4173:4173"
+    networks:
+      app-network:
+        ipv4_address: 192.168.100.5
+
+networks:
+  app-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.100.0/24
+
+volumes:
+  db_data:
