@@ -2,6 +2,8 @@
 import threading, queue, time, numpy as np
 import pyvirtualcam
 from pyvirtualcam import PixelFormat
+import logging
+logger = logging.getLogger(__name__)
 
 class VirtualCamera:
     def __init__(self, device: str | None = None):
@@ -59,5 +61,5 @@ class VirtualCamera:
                     cam.sleep_until_next_frame()
                     last_send = time.time()
         except Exception as e:
-            print(f"[VIRTUAL CAMERA ERROR] {e}")
+            logger.error("[VIRTUAL CAMERA ERROR] %s", e)
             return

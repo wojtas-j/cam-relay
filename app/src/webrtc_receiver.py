@@ -12,6 +12,8 @@ from dotenv import load_dotenv
 
 from virtual_cam import VirtualCamera
 from vbcable_player import VBCablePlayer
+import logging
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -75,7 +77,7 @@ class WebRTCReceiver:
                                                  samplerate=48000, channels=2, dtype="int16",
                                                  frames_per_buffer=960)
             except Exception as e:
-                print(f"[VBCABLE] Initialization error: {e}")
+                logger.error("[WEBRTC RECIEVER] Initialization error: %s", e)
                 self._vbc_player = None
 
     def _run_loop(self):
@@ -93,7 +95,7 @@ class WebRTCReceiver:
             try:
                 await self._pc.close()
             except Exception as e:
-                print(f"[WEBRTC RECIEVER - HANDLE OFFER 2] {e}")
+                logger.error("[WEBRTC RECIEVER - HANDLE OFFER]: %s", e)
                 pass
             self._pc = None
 
@@ -118,20 +120,19 @@ class WebRTCReceiver:
 
         @pc.on("track")
         def on_track(track):
-            print(f"[WebRTCReceiver] Track received: {track.kind}")
-
+            logger.info("[WEBRTC RECIEVER] Track received")
             if track.kind == "video":
                 if not self.has_stream:
                     self.has_stream = True
                     try:
                         self.on_stream_start()
                     except Exception as e:
-                        print(f"[Webrct reciever error - on track] {e}")
+                        logger.error("[WEBRTC RECIEVER - ON TRACK]: %s", e)
                         pass
                 asyncio.ensure_future(self._recv_video(track), loop=self._loop)
 
             elif track.kind == "audio":
-                print("[AUDIO] Track received")
+                logger.info("[AUDIO] Track received")
                 asyncio.ensure_future(self._recv_audio(track), loop=self._loop)
 
         try:
@@ -158,7 +159,7 @@ class WebRTCReceiver:
             send_answer_callback(answer_obj)
 
         except Exception as e:
-            print(f"[Webrct reciever error - HANDLE OFFER 1] {e}")
+            logger.error("[WEBRTC RECEIVER - HANDLE OFER]: %s", e)
             traceback.print_exc()
 
     async def _recv_video(self, track):
@@ -184,7 +185,7 @@ class WebRTCReceiver:
                 self._virtual_cam.send_frame(img)
 
         except Exception as e:
-            print(f"[Webrct reciever error - RECV VIDEO] {e}")
+            logger.error("[WEBRTC RECIEVER - VIDEO]: %s", e)
             pass
         finally:
             self._cleanup_after_stream_stop()
@@ -204,9 +205,9 @@ class WebRTCReceiver:
             try:
                 if not self._vbc_player.is_running():
                     self._vbc_player.start()
-                    print("[VBCABLE] Player started")
+                    logger.info("[VBCABLE] Player started")
             except Exception as e:
-                print(f"[AUDIO] VB-Cable start error: {e}")
+                logger.error("[AUDIO] VB-Cable start error: %s", e)
 
         try:
             while True:
@@ -214,8 +215,16 @@ class WebRTCReceiver:
                 arr = frame.to_ndarray()
                 if not first_frames_logged and frame_count_for_log < 5:
                     frame_count_for_log += 1
-                    print(f"\n=== AUDIO FRAME #{frame_count_for_log} ===")
-                    print(f"   shape: {arr.shape} dtype: {arr.dtype} range: {arr.min()}...{arr.max()}")
+                    logger.info(
+                        "\n=== AUDIO FRAME #%s ===\n"
+                        "   shape: %s dtype: %s range: %s...%s",
+                        frame_count_for_log,
+                        arr.shape,
+                        arr.dtype,
+                        arr.min(),
+                        arr.max(),
+                    )
+
                     if frame_count_for_log == 5:
                         first_frames_logged = True
 
@@ -243,7 +252,7 @@ class WebRTCReceiver:
                     interleaved = s.reshape(-1).tobytes()
 
                 except Exception as e:
-                    print(f"[AUDIO] Conversion failed: {e}")
+                    logger.error("[AUDIO] Conversion failed: %s", e)
                     interleaved = arr.astype(np.int16).reshape(-1).tobytes()
 
                 # Wysyłanie do VB-Cable
@@ -251,7 +260,7 @@ class WebRTCReceiver:
                     try:
                         self._vbc_player.write(interleaved)
                     except Exception as e:
-                        print(f"[VBCABLE] Write error: {e}")
+                        logger.error("[VBCABLE] Write error: %s", e)
 
                 # RMS
                 try:
@@ -266,20 +275,20 @@ class WebRTCReceiver:
 
                     self.audio_level = max(0.0, min(1.0, rms * 4.2))
                 except Exception as e:
-                    print(f"[AUDIO ERROR]: {e}")
+                    logger.error("[AUDIO] RMS: %s", e)
                     self.audio_level = 0.0
 
         except Exception as e:
-            print(f"[AUDIO] Stream ended: {e}")
+            logger.error("[AUDIO] Stream ended: %s", e)
 
         finally:
             # Stop VB-Cable
             if self._vbc_player is not None:
                 try:
                     self._vbc_player.stop()
-                    print("[VBCABLE] Player stopped")
+                    logger.info("[VBCABLE] Player stopped")
                 except Exception as e:
-                    print(f"[AUDIO] VB-Cable stop error: {e}")
+                    logger.error("[AUDIO] VB-Cable stop error: %s", e)
 
             self.audio_level = 0.0
             self._cleanup_after_stream_stop()
@@ -290,7 +299,7 @@ class WebRTCReceiver:
             try:
                 self.on_stream_stop()
             except Exception as e:
-                print(f"[WEBRTC RECIEVER - CLEANUP AFTER STREAM STOP] {e}")
+                logger.error("[WEBRTC RECIEVER - CLEANUP AFTER STREAM STOP]: %s", e)
                 pass
 
         self.stop_preview()
@@ -309,7 +318,7 @@ class WebRTCReceiver:
                 self._pc.addIceCandidate(candidate), self._loop
             )
         except Exception as e:
-            print(f"[WEBRTC RECIEVER - ADD CANDIDATE] {e}")
+            logger.error("[WEBRTC RECIEVER - ADD CANDIDATE]: %s", e)
             traceback.print_exc()
 
     def start_preview(self):
@@ -330,7 +339,7 @@ class WebRTCReceiver:
         try:
             cv2.destroyAllWindows()
         except Exception as e:
-            print(f"[WEBRTC RECIEVER - STOP PREVIEW] {e}")
+            logger.error("[WEBRTC RECIEVER - STOP PREVIEW]: %s", e)
             pass
 
         self._preview_thread = None
@@ -367,6 +376,7 @@ class WebRTCReceiver:
         try:
             cv2.destroyWindow("Stream Preview")
         except Exception as e:
+            logger.error("[WEBRTC RECIEVER - PREVIEW LOOP]: %s", e)
             pass
 
     def stop_virtual_camera(self):
@@ -374,7 +384,7 @@ class WebRTCReceiver:
             if self._virtual_cam_started:
                 self._virtual_cam.stop()
         except Exception as e:
-            print(f"[WEBRTC RECIEVER - STOP VIRTUAL CAMERA] {e}")
+            logger.error("[WEBRTC RECIEVER - STOP VIRTUAL CAMERA]: %s", e)
             pass
         self._virtual_cam_started = False
 
@@ -386,7 +396,7 @@ class WebRTCReceiver:
             try:
                 asyncio.run_coroutine_threadsafe(self._pc.close(), self._loop).result(timeout=2)
             except Exception as e:
-                print(f"[WEBRTC RECIEVER - STOP STREAM] {e}")
+                logger.error("[WEBRTC RECIEVER - STOP STREAM]: %s", e)
                 pass
             self._pc = None
 
@@ -395,7 +405,7 @@ class WebRTCReceiver:
             try:
                 self._vbc_player.stop()
             except Exception as e:
-                print(f"[WEBRTC RECIEVER - STOP STREAM] {e}")
+                logger.error("[WEBRTC RECIEVER - STOP STREAM]: %s", e)
                 pass
 
         self.latest_frame = None
@@ -405,20 +415,20 @@ class WebRTCReceiver:
             try:
                 self.on_stream_stop()
             except Exception as e:
-                print(f"[WEBRTC RECIEVER - STOP STREAM] {e}")
+                logger.error("[WEBRTC RECIEVER - STOP STREAM]: %s", e)
                 pass
 
     def close(self):
         try:
             self.stop_stream()
         except Exception as e:
-            print(f"[WEBRTC RECIEVER - CLOSE] {e}")
+            logger.error("[WEBRTC RECIEVER - CLOSE]: %s", e)
             pass
 
         try:
             self._loop.call_soon_threadsafe(self._loop.stop)
         except Exception as e:
-            print(f"[WEBRTC RECIEVER - CLOSE] {e}")
+            logger.error("[WEBRTC RECIEVER - CLOSE]: %s", e)
             pass
 
         if self._thread and self._thread.is_alive():

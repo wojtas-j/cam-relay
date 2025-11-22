@@ -3,6 +3,9 @@ import sounddevice as sd
 import threading
 import numpy as np
 from typing import Optional
+import logging
+logger = logging.getLogger(__name__)
+
 
 class VBCablePlayer:
     def __init__(self,
@@ -36,7 +39,7 @@ class VBCablePlayer:
                 if name_substr_lower in dev['name'].lower() and dev['max_output_channels'] >= self.channels:
                     return idx
         except Exception as e:
-            print(f"[VBCABLE PLAYER ERROR - FIND DEVICE] {e}")
+            logger.error("[VBCABLE PLAYER ERROR - FIND DEVICE] %s", e)
             pass
         return None
 
@@ -77,7 +80,7 @@ class VBCablePlayer:
             self._stream.start()
             self._running = True
         except Exception as e:
-            print(f"[VBCABLE PLAYER ERROR - START] {e}")
+            logger.error("[VBCABLE PLAYER ERROR - START] %s", e)
             raise RuntimeError(f"Cannot start VBCablePlayer stream (device '{self.device_name_substr}'): {e}")
 
     def write(self, pcm_bytes: bytes):
@@ -98,12 +101,12 @@ class VBCablePlayer:
                 try:
                     self._stream.stop()
                 except Exception as e:
-                    print(f"[VBCABLE PLAYER ERROR - STOP] {e}")
+                    logger.error("[VBCABLE PLAYER ERROR - STOP] %s", e)
                     pass
                 try:
                     self._stream.close()
                 except Exception as e:
-                    print(f"[VBCABLE PLAYER ERROR - STOP] {e}")
+                    logger.error("[VBCABLE PLAYER ERROR - STOP] %s", e)
                     pass
         finally:
             self._stream = None

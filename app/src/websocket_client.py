@@ -4,6 +4,8 @@ import threading
 import time
 import traceback
 from typing import Callable, Optional
+import logging
+logger = logging.getLogger(__name__)
 
 try:
     import websocket  # websocket-client
@@ -33,7 +35,7 @@ class WebSocketClient:
         try:
             self.on_status(msg)
         except Exception as e:
-            print(f"[WEBSOCKET CLIENT ERROR - LOG STATUS] {e}")
+            logger.error("[WEBSOCKET CLIENT ERROR - LOG STATUS] %s", e)
             pass
 
     def _on_open(self, ws):
@@ -43,7 +45,7 @@ class WebSocketClient:
         try:
             self.on_message(message)
         except Exception as e:
-            print(f"[WEBSOCKET CLIENT ERROR - ON MESSAGE] {e}")
+            logger.error("[WEBSOCKET CLIENT ERROR - ON MESSAGE] %s", e)
             traceback.print_exc()
 
     def _on_close(self, ws, close_status_code, close_msg):
@@ -96,7 +98,7 @@ class WebSocketClient:
             try:
                 self._ws_app.close()
             except Exception as e:
-                print(f"[WEBSOCKET CLIENT ERROR - DISCONNECT] {e}")
+                logger.error("[WEBSOCKET CLIENT ERROR - DISCONNECT] %s", e)
                 pass
         # wait a little for clean close
         if self._thread:
