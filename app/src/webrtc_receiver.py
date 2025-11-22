@@ -5,25 +5,24 @@ import traceback
 import numpy as np
 import cv2
 import os
+import logging
+import config
 from typing import Callable, Optional, Dict, Any
 from aiortc import RTCPeerConnection, RTCSessionDescription, RTCIceServer, RTCConfiguration
 from aiortc.contrib.media import MediaBlackhole
-from dotenv import load_dotenv
 
 from virtual_cam import VirtualCamera
 from vbcable_player import VBCablePlayer
-import logging
+
 logger = logging.getLogger(__name__)
 
-load_dotenv()
-
-API_HOST = os.getenv("PUBLIC_IP")
-API_PORT = os.getenv("SPRING_PORT")
-FRONTEND_PORT = os.getenv("FRONTEND_PORT")
-TURN_PORT = os.getenv("TURN_PORT")
-TURN_USERNAME = os.getenv("TURN_USERNAME")
-TURN_PASSWORD = os.getenv("TURN_PASSWORD")
-STUN_URL = os.getenv("STUN_URL")
+API_HOST = config.API_HOST
+API_PORT = config.API_PORT
+FRONTEND_PORT = config.FRONTEND_PORT
+TURN_PORT = config.TURN_PORT
+TURN_USERNAME = config.TURN_USERNAME
+TURN_PASSWORD = config.TURN_PASSWORD
+STUN_URL = config.STUN_URL
 
 
 class WebRTCReceiver:

@@ -1,12 +1,13 @@
 # app.py
 import argparse
 import customtkinter as ctk
+import config
+import sys
+import logging
 from auth import AuthClient
 from login_window import LoginWindow
 from main_window import MainWindow
 from logger import setup_logging
-import logging
-import sys
 
 
 def start_app():
