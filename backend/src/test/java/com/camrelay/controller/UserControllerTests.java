@@ -7,6 +7,7 @@ import com.camrelay.entity.Role;
 import com.camrelay.exception.AuthenticationException;
 import com.camrelay.exception.GlobalExceptionHandler;
 import com.camrelay.exception.UserNotFoundException;
+import com.camrelay.properties.CorsProperties;
 import com.camrelay.service.JwtTokenProviderImpl;
 import com.camrelay.service.interfaces.UserService;
 import org.junit.jupiter.api.Nested;
@@ -16,6 +17,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -34,6 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @since 1.0
  */
 @WebMvcTest(UserController.class)
+@ActiveProfiles("test")
 @ContextConfiguration(classes = {UserController.class, GlobalExceptionHandler.class, SecurityConfig.class})
 @Import(SecurityConfig.class)
 class UserControllerTests {
@@ -54,6 +57,10 @@ class UserControllerTests {
     @SuppressWarnings("unused")
     @MockitoBean
     private CookieComponent cookieComponent;
+
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private CorsProperties corsProperties;
 
     @Nested
     class DeleteUser {
