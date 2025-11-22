@@ -39,11 +39,9 @@ export const deleteUser = async (id: number) => {
 };
 
 export const getWebSocketUrl = (path = "/ws") => {
-    const isLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname);
-    const host = isLocal
-        ? window.location.hostname
-        : import.meta.env.VITE_API_HOST;
-    const port = Number(import.meta.env.VITE_API_PORT);
+    const host = import.meta.env.VITE_API_HOST;
+    const port = import.meta.env.VITE_API_PORT;
+
     return `wss://${host}:${port}${path}`;
 };
 

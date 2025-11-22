@@ -3,14 +3,16 @@ import os
 from dotenv import load_dotenv
 import requests
 
-load_dotenv()
+APP_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.abspath(os.path.join(APP_DIR, "..", ".."))
+ENV_PATH = os.path.join(BASE_DIR, ".env.development")
+load_dotenv(ENV_PATH)
 
 class AuthClient:
     """
     Auth HTTP client wrapping requests.Session.
     - Preserves cookies (requests.Session)
     - By default verifies TLS (requests.Session.verify = True)
-    - For dev/test you can set env APP_ENV=test or ALLOW_INSECURE=true to disable TLS verification
     """
 
     ACCESS_TOKEN_COOKIE_NAME = "accessToken"
