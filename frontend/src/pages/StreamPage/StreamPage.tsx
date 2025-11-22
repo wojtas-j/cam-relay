@@ -149,22 +149,58 @@ const StreamPage: React.FC = () => {
     };
 
     const startStream = async () => {
-        if (!onlineReceiver) { addLog("❌ No receiver online"); return; }
-        if (!username) { addLog("❌ No username"); return; }
+        if (!onlineReceiver) {
+            addLog("❌ No receiver online");
+            return;
+        }
+        if (!username) {
+            addLog("❌ No username");
+            return;
+        }
+
         try {
             addLog("Creating RTCPeerConnection...");
             const pc = new RTCPeerConnection(ICE_CONFIG);
             pcRef.current = pc;
 
-            const local = await ensureLocalStream();
+            //
+            // --- iOS REQUIREMENT: playsInline to avoid blocking video ---
+            //
+            if (previewRef.current) {
+                previewRef.current.playsInline = true;
+                previewRef.current.muted = true; // iOS requires autoplay to be muted initially
+            }
+
+            //
+            // --- GET USER MEDIA (must be in a click handler!) ---
+            //
+            let local: MediaStream;
+            try {
+                local = await ensureLocalStream();
+            } catch (err) {
+                addLog("❌ getUserMedia blocked: " + String(err));
+                alert("Musisz zezwolić na kamerę i mikrofon.");
+                return;
+            }
+
+            //
+            // Make sure tracks are enabled
+            //
             local.getAudioTracks().forEach(t => t.enabled = true);
+            local.getVideoTracks().forEach(t => t.enabled = true);
             setMutedMic(false);
 
+            //
+            // --- ADD TRACKS BEFORE CREATING OFFER (required by Safari/iOS) ---
+            //
             for (const t of local.getTracks()) {
                 addLog("Adding track: " + t.kind);
                 pc.addTrack(t, local);
             }
 
+            //
+            // --- ENCODING PARAMETERS (Safari friendly) ---
+            //
             const videoTrack = local.getVideoTracks()[0];
             const sender = pc.getSenders().find(s => s.track === videoTrack);
             if (sender) {
@@ -173,28 +209,45 @@ const StreamPage: React.FC = () => {
 
                 params.encodings[0].maxBitrate = 5_000_000;
                 params.encodings[0].maxFramerate = 60;
-                params.encodings[0].networkPriority = "high";
                 params.encodings[0].scaleResolutionDownBy = 1.0;
 
-                await sender.setParameters(params);
+                try {
+                    await sender.setParameters(params);
+                } catch (e) {
+                    addLog("⚠ sender.setParameters not fully supported");
+                }
             }
 
+            //
+            // --- ICE ---
+            //
             pc.onicecandidate = (e) => {
                 if (e.candidate) {
                     sendSignal("candidate", e.candidate.toJSON(), onlineReceiver);
                 }
             };
 
-            pc.onconnectionstatechange = () =>
+            pc.onconnectionstatechange = () => {
                 addLog("PeerConnection state = " + pc.connectionState);
+            };
 
-            const offer = await pc.createOffer();
+            //
+            // --- CREATE & SEND OFFER (must be last) ---
+            //
+            const offer = await pc.createOffer({
+                offerToReceiveAudio: false,
+                offerToReceiveVideo: false
+            });
 
             await pc.setLocalDescription(offer);
 
             sendSignal("offer", offer, onlineReceiver);
 
+            //
+            // UI
+            //
             setHasStream(true);
+            addLog("🎉 Stream started!");
 
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : String(e);
@@ -203,6 +256,7 @@ const StreamPage: React.FC = () => {
             cleanupPeer();
         }
     };
+
 
 
     const stopStreamInternal = () => {
