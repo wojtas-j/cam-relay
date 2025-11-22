@@ -8,7 +8,8 @@ logger = logging.getLogger(__name__)
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.abspath(os.path.join(APP_DIR, "..", ".."))
-ENV_PATH = os.path.join(BASE_DIR, ".env.development")
+ENV_PATH = os.path.join(BASE_DIR, ".env.production")
+
 load_dotenv(ENV_PATH)
 
 class AuthClient:

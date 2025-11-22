@@ -46,6 +46,7 @@ websocket:
   path: "/ws"
   allowed-origins:
     - "https://localhost:3000"
+    - "https://localhost:4173"
   message-buffer-limit: 512000
   heartbeat-interval-ms: 30000
 
