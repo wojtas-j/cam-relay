@@ -81,6 +81,7 @@ class LoginWindow(ctk.CTkToplevel):
     def on_close(self):
         try:
             self.destroy()
+            self.master.event_generate("<<APP_EXIT>>")
         except Exception as e:
             logging.error("[LOGIN WINDOW - CLOSE DESTROY ERROR] %s", e)
             pass
