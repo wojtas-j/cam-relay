@@ -4,7 +4,8 @@ import customtkinter as ctk
 from popup import Popup
 from websocket_client import WebSocketClient
 from webrtc_receiver import WebRTCReceiver
-
+import logging
+logger = logging.getLogger(__name__)
 
 class MainWindow(ctk.CTkToplevel):
     def __init__(self, parent, user_info, auth_client):
@@ -147,12 +148,12 @@ class MainWindow(ctk.CTkToplevel):
         if getattr(self.webrtc, "_preview_running", None) and self.webrtc._preview_running.is_set():
             # stop preview
             self.webrtc.stop_preview()
-            print("[Stream Preview] stopped by user")
+            logging.info("[Stream Preview] stopped by user")
             return
 
         # start preview thread/window
         self.webrtc.start_preview()
-        print("[Stream Preview] started; showing frames in separate window")
+        logging.info("[Stream Preview] started; showing frames in separate window")
 
     # --------------------------
     # CONNECT / DISCONNECT
@@ -209,7 +210,7 @@ class MainWindow(ctk.CTkToplevel):
         try:
             data = json.loads(message)
         except Exception as e:
-            print(f"[MAIN WINDOW - ON MESSAGE] {e}")
+            logging.error("[MAIN WINDOW - ON MESSAGE] %s", e)
             return
 
         msg_type = data.get("type")
@@ -292,7 +293,7 @@ class MainWindow(ctk.CTkToplevel):
                 self.audio_slider.set(0)
                 self.audio_slider.configure(state="disabled")
         except Exception as e:
-            print(f"[MAIN WINDOW - AUDIO METER] {e}")
+            logging.error("[MAIN WINDOW - AUDIO METER] %s", e)
             pass
 
         # call again in 50ms

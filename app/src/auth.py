@@ -2,6 +2,9 @@
 import os
 from dotenv import load_dotenv
 import requests
+import logging
+logger = logging.getLogger(__name__)
+
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.abspath(os.path.join(APP_DIR, "..", ".."))
@@ -42,7 +45,7 @@ class AuthClient:
             try:
                 msg = resp.json().get("message", "Login failed")
             except Exception as e:
-                print(f"[AUTH ERROR - LOGIN] {e}")
+                logger.error("[AUTH ERROR - LOGIN] %s", e)
                 msg = f"Login failed (status {resp.status_code})"
             raise Exception(msg)
 
@@ -69,7 +72,7 @@ class AuthClient:
             url = self._url("/auth/logout")
             self.session.post(url)
         except Exception as e:
-            print(f"[AUTH ERROR - LOGOUT] {e}")
+            logger.error("[AUTH ERROR - LOGOUT] %s", e)
             pass
         # clear local cookie
         self.session.cookies.pop(self.ACCESS_TOKEN_COOKIE_NAME, None)
@@ -85,7 +88,7 @@ class AuthClient:
             try:
                 msg = resp.json().get("message", "Cannot fetch user")
             except Exception as e:
-                print(f"[AUTH ERROR - GET CURRENT USER] {e}")
+                logger.error("[AUTH ERROR - GET CURRENT USER] %s", e)
                 msg = "Cannot fetch user"
             raise Exception(msg)
         return resp.json()
