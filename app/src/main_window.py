@@ -102,6 +102,8 @@ class MainWindow(ctk.CTkToplevel):
 
         self._update_audio_meter()
 
+        self.protocol("WM_DELETE_WINDOW", self._on_close)
+
     # --------------------------
     # INTERNAL HELPERS
     # --------------------------
@@ -298,3 +300,21 @@ class MainWindow(ctk.CTkToplevel):
 
         # call again in 50ms
         self.after(50, self._update_audio_meter)
+
+    def _on_close(self):
+        try:
+            if self.ws_client:
+                self.ws_client.disconnect()
+            if self.webrtc:
+                self.webrtc.close()
+        except Exception as e:
+            logging.error("[MAIN WINDOW - ON CLOSE] %s", e)
+
+        try:
+            self.destroy()
+            self.master.destroy()
+        except Exception as e:
+            logging.error("[MAIN WINDOW - CLOSE DESTROY ERROR] %s", e)
+            pass
+
+
