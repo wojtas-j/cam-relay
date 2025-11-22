@@ -31,8 +31,8 @@ class LoginWindow(ctk.CTkToplevel):
         self.password = ctk.CTkEntry(self, placeholder_text="Password", show="*", width=240)
         self.password.pack(pady=10)
 
-        self.username.insert(0, "admin")
-        self.password.insert(0, "Testadmin123!")
+        self.username.insert(0, "")
+        self.password.insert(0, "")
 
         self.show_btn = ctk.CTkButton(self, text="👁 Show", width=90, command=self.toggle_pass)
         self.show_btn.pack()
