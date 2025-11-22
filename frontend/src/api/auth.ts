@@ -1,8 +1,7 @@
 import axios, { AxiosError} from "axios";
-import { logout as backendLogout } from "./auth";
 
 export const axiosClient = axios.create({
-    baseURL: `https://${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api`,
+    baseURL: `https://${import.meta.env.VITE_API_HOST}/api`,
     withCredentials: true,
 });
 
@@ -40,9 +39,8 @@ export const deleteUser = async (id: number) => {
 
 export const getWebSocketUrl = (path = "/ws") => {
     const host = import.meta.env.VITE_API_HOST;
-    const port = import.meta.env.VITE_API_PORT;
 
-    return `wss://${host}:${port}${path}`;
+    return `wss://${host}${path}`;
 };
 
 export const getReceivers = async () => {
@@ -118,7 +116,9 @@ axiosClient.interceptors.response.use(
             return Promise.reject(error);
         }
 
-        if (originalRequest.url?.includes("/auth/refresh") || originalRequest.url?.includes("/auth/login")) {
+        const url = originalRequest.url ?? "";
+        if (url.includes("/auth/refresh") || url.includes("/auth/login")) {
+            window.dispatchEvent(new Event("force-logout"));
             return Promise.reject(error);
         }
 
@@ -135,20 +135,16 @@ axiosClient.interceptors.response.use(
 
         try {
             await refreshToken();
-            console.log("%c✅ Token refreshed successfully", "color: green; font-weight: bold");
+            console.log("✅ Token refreshed");
 
             onRefreshed(true);
             return axiosClient(originalRequest);
         } catch (refreshError) {
-            console.error("%c❌ Token refresh failed", "color: red; font-weight: bold");
+            console.log("❌ Refresh failed");
+
             onRefreshed(false);
 
-            try {
-                await backendLogout();
-            } catch {}
-
             window.dispatchEvent(new Event("force-logout"));
-            window.location.href = "/login";
 
             return Promise.reject(refreshError);
         } finally {
@@ -156,3 +152,4 @@ axiosClient.interceptors.response.use(
         }
     }
 );
+

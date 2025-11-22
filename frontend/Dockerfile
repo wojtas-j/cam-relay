@@ -1,27 +1,28 @@
+# ============================
+# BUILD STAGE
+# ============================
 FROM node:20-alpine AS build
 
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install
 
-COPY vite.config.ts ./
-COPY certs ./certs
+RUN npm ci
+
 COPY . .
-
 RUN npm run build
 
-FROM node:20-alpine
+# ============================
+# NGINX STAGE
+# ============================
+FROM nginx:stable-alpine
 
-WORKDIR /app
+RUN rm -rf /usr/share/nginx/html/*
 
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/vite.config.ts ./vite.config.ts
-COPY --from=build /app/certs ./certs
-COPY package*.json ./
+COPY --from=build /app/dist /usr/share/nginx/html
 
-RUN npm install --omit=dev && npm install vite
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-EXPOSE 4173
+EXPOSE 80
 
-CMD ["npx", "vite", "preview", "--host", "0.0.0.0", "--port", "4173"]
+CMD ["nginx", "-g", "daemon off;"]

@@ -310,6 +310,8 @@ class MainWindow(ctk.CTkToplevel):
         except Exception as e:
             logging.error("[MAIN WINDOW - ON CLOSE] %s", e)
 
+        self.master.event_generate("<<APP_EXIT>>")
+
         try:
             self.destroy()
             self.master.destroy()

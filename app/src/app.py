@@ -1,18 +1,19 @@
 # app.py
 import argparse
 import customtkinter as ctk
-import config
 import sys
 import logging
 from auth import AuthClient
 from login_window import LoginWindow
 from main_window import MainWindow
 from logger import setup_logging
+from docker_manager import run_docker_compose_up, run_docker_compose_down, register_shutdown_hook
+from popup import Popup
 
 
 def start_app():
     # -----------------------------
-    # Parse CLI arguments first
+    # Parse CLI arguments
     # -----------------------------
     parser = argparse.ArgumentParser(description="Cam Relay GUI Application")
     parser.add_argument("--debug", action="store_true", help="Enable debug mode")
@@ -34,12 +35,40 @@ def start_app():
     # Create root window
     # -----------------------------
     root = ctk.CTk()
-    root.withdraw()  # login window opens first
+    root.bind("<<APP_EXIT>>", lambda e: on_close_root())
+    root.withdraw()
     root.title("Cam Relay")
     root.geometry("600x400")
 
     # -----------------------------
-    # Auth client initialization
+    # GLOBAL CLOSE HANDLER (docker down)
+    # -----------------------------
+    def on_close_root():
+        logging.info("Application closing... Running docker-compose down.")
+        try:
+            run_docker_compose_down()
+        except Exception as e:
+            logging.error("Error while stopping Docker: %s", e)
+        finally:
+            root.destroy()
+
+    root.protocol("WM_DELETE_WINDOW", on_close_root)
+
+    # -----------------------------
+    # Start Docker on app launch
+    # -----------------------------
+    try:
+        ok = run_docker_compose_up()
+        if not ok:
+            Popup.error(root, "Failed to start Docker! Check docker.log.")
+        else:
+            logging.info("Docker started successfully.")
+    except Exception as e:
+        logging.error("Error starting Docker: %s", e)
+        Popup.error(root, "Docker error: " + str(e))
+
+    # -----------------------------
+    # Initialize Auth
     # -----------------------------
     try:
         auth = AuthClient()

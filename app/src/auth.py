@@ -22,10 +22,9 @@ class AuthClient:
     ACCESS_TOKEN_COOKIE_NAME = "accessToken"
 
     def __init__(self, base_url: str = None):
-        api_port = os.getenv("SPRING_PORT")
-        #api_host = os.getenv("PUBLIC_HOST")
-        if (base_url is None) or (base_url == ""):
-            base_url = f"https://localhost:{api_port}/api"
+        api_host = os.getenv("PUBLIC_IP")
+        if base_url is None or base_url == "":
+            base_url = f"https://{api_host}/api"
         self.base_url = base_url.rstrip("/")
         self.session = requests.Session()
 
