@@ -4,7 +4,7 @@ services:
     container_name: postgres_db_camrelay
     restart: unless-stopped
     env_file:
-      - .env
+      - .env.development
     ports:
       - "5432:5432"
     volumes:
