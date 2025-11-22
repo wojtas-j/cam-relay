@@ -421,15 +421,22 @@ class WebRTCReceiver:
     def close(self):
         try:
             self.stop_stream()
-        except Exception as e:
-            logger.error("[WEBRTC RECIEVER - CLOSE]: %s", e)
+        except Exception:
             pass
 
         try:
-            self._loop.call_soon_threadsafe(self._loop.stop)
+            def _stop():
+                self._loop.stop()
+
+            self._loop.call_soon_threadsafe(_stop)
         except Exception as e:
             logger.error("[WEBRTC RECIEVER - CLOSE]: %s", e)
             pass
 
         if self._thread and self._thread.is_alive():
-            self._thread.join(timeout=2)
+            try:
+                self._thread.join(timeout=2)
+            except Exception as e:
+                logger.error("[WEBRTC RECIEVER - CLOSE THREAD]: %s", e)
+                pass
+

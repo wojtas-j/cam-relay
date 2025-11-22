@@ -1,6 +1,8 @@
 #login_window.py
 import customtkinter as ctk
+import logging
 from popup import Popup
+logger = logging.getLogger(__name__)
 
 class LoginWindow(ctk.CTkToplevel):
     def __init__(self, parent, auth_client, on_success):
@@ -41,6 +43,8 @@ class LoginWindow(ctk.CTkToplevel):
         self.grab_set()
         self.focus_force()
 
+        self.protocol("WM_DELETE_WINDOW", self.on_close)
+
     def center(self):
         self.update_idletasks()
         w, h = 420, 320
@@ -73,3 +77,12 @@ class LoginWindow(ctk.CTkToplevel):
 
         except Exception as e:
             Popup.error(self, str(e))
+
+    def on_close(self):
+        try:
+            self.destroy()
+        except Exception as e:
+            logging.error("[LOGIN WINDOW - CLOSE DESTROY ERROR] %s", e)
+            pass
+        self.parent.destroy()
+

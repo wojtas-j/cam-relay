@@ -44,7 +44,7 @@ def start_app():
         auth = AuthClient()
         logging.info("AuthClient initialized")
     except Exception as e:
-        logging.exception("Failed to initialize AuthClient")
+        logging.error("Failed to initialize AuthClient: %s", e)
         sys.exit(1)
 
     # -----------------------------
@@ -61,21 +61,12 @@ def start_app():
     LoginWindow(root, auth, on_login_success)
 
     # -----------------------------
-    # Handle app closing
-    # -----------------------------
-    def on_close():
-        logging.info("App closed by user")
-        root.destroy()
-
-    root.protocol("WM_DELETE_WINDOW", on_close)
-
-    # -----------------------------
     # Start event loop
     # -----------------------------
     try:
         root.mainloop()
-    except Exception:
-        logging.exception("Unhandled error in GUI loop")
+    except Exception as e:
+        logging.error("Unhandled error in GUI loop: %s", e)
         raise
 
 
