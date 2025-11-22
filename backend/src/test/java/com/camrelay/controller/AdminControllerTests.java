@@ -1,5 +1,6 @@
 package com.camrelay.controller;
 
+import com.camrelay.properties.CorsProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -25,6 +26,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -44,6 +46,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @since 1.0
  */
 @WebMvcTest(AdminController.class)
+@ActiveProfiles("test")
 @ContextConfiguration(classes = {AdminController.class, GlobalExceptionHandler.class, SecurityConfig.class})
 @Import(SecurityConfig.class)
 class AdminControllerTests {
@@ -73,6 +76,10 @@ class AdminControllerTests {
     @SuppressWarnings("unused")
     @MockitoBean
     private AuthenticationService authenticationService;
+
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private CorsProperties corsProperties;
 
     @Nested
     class GetAllUsersTests {

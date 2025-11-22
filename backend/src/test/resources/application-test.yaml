@@ -48,3 +48,11 @@ websocket:
     - "https://localhost:3000"
   message-buffer-limit: 512000
   heartbeat-interval-ms: 30000
+
+# CORS
+cors:
+  allowed-origins:
+    - "https://localhost:3000"
+    - "https://localhost:4173"
+    - "https://87.205.113.203:4173"
+

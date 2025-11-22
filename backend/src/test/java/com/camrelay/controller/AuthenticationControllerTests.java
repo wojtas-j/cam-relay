@@ -1,6 +1,7 @@
 package com.camrelay.controller;
 
 import com.camrelay.component.CookieComponent;
+import com.camrelay.properties.CorsProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -33,6 +34,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -52,6 +54,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @since 1.0
  */
 @WebMvcTest(AuthenticationController.class)
+@ActiveProfiles("test")
 @ContextConfiguration(classes = {AuthenticationController.class, GlobalExceptionHandler.class, SecurityConfig.class, CookieComponent.class})
 @Import(SecurityConfig.class)
 class AuthenticationControllerTests {
@@ -86,6 +89,10 @@ class AuthenticationControllerTests {
     @SuppressWarnings("unused")
     @MockitoBean
     private JwtProperties jwtProperties;
+
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private CorsProperties corsProperties;
 
     private final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule())
